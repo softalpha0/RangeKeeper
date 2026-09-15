@@ -1,0 +1,58 @@
+{
+  "name": "mm-plugin-rangekeeper",
+  "version": "0.1.0",
+  "description": "Deposit into and inspect Rangekeeper adaptive-liquidity vaults on Monad, from the MetaMask Agent Wallet CLI (mm)",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "oclif-plugin"
+  ],
+  "files": [
+    "dist",
+    "oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && oclif manifest",
+    "prepack": "tsc -p tsconfig.json && oclif manifest"
+  },
+  "oclif": {
+    "bin": "mm",
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "topics": {
+      "rangekeeper": {
+        "description": "Rangekeeper adaptive-liquidity vaults on Monad"
+      }
+    }
+  },
+  "mm": {
+    "schemaVersion": 1,
+    "minCliVersion": "^6.2.0",
+    "capabilities": [],
+    "commands": [
+      {
+        "id": "rangekeeper:status",
+        "capabilities": ["wallet-read"],
+        "dataAccess": [],
+        "targetChains": [10143, 143]
+      },
+      {
+        "id": "rangekeeper:deposit",
+        "capabilities": ["wallet-read", "wallet-submit"],
+        "dataAccess": ["accounts"],
+        "targetChains": [10143, 143]
+      }
+    ]
+  },
+  "peerDependencies": {
+    "@metamask/agent-wallet": "^6.2.0"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@metamask/agent-wallet": "^6.2.0",
+    "oclif": "^4",
+    "typescript": "^5"
+  }
+}

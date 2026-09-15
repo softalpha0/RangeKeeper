@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rangekeeper App</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#f6f7f5; --paper-raised:#ecefec; --panel:#ffffff;
+    --ink:#141b1a; --ink-soft:#3e4846; --muted:#6b7573; --line:#dadfdc;
+    --accent:#0e7c86; --accent-deep:#0a5960; --accent-soft:rgba(14,124,134,.10);
+    --good:#3e7d4c; --good-soft:rgba(62,125,76,.10);
+    --warn:#9c6b12; --warn-soft:rgba(156,107,18,.11);
+    --risk:#a8451f; --risk-soft:rgba(168,69,31,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0f1514; --paper-raised:#161f1d; --panel:#131b19;
+      --ink:#e8ece9; --ink-soft:#c3cbc8; --muted:#8b9694; --line:#28332f;
+      --accent:#35b0ba; --accent-deep:#7dd4db; --accent-soft:rgba(53,176,186,.13);
+      --good:#6fbf7e; --good-soft:rgba(111,191,126,.13);
+      --warn:#dba53c; --warn-soft:rgba(219,165,60,.14);
+      --risk:#e08a63; --risk-soft:rgba(224,138,99,.14);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f1514; --paper-raised:#161f1d; --panel:#131b19;
+    --ink:#e8ece9; --ink-soft:#c3cbc8; --muted:#8b9694; --line:#28332f;
+    --accent:#35b0ba; --accent-deep:#7dd4db; --accent-soft:rgba(53,176,186,.13);
+    --good:#6fbf7e; --good-soft:rgba(111,191,126,.13);
+    --warn:#dba53c; --warn-soft:rgba(219,165,60,.14);
+    --risk:#e08a63; --risk-soft:rgba(224,138,99,.14);
+  }
+  *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }
+  body{ background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans", system-ui, sans-serif; font-size:15px; line-height:1.5; }
+  h1,h2,h3{ font-family:"Source Serif 4", Georgia, serif; color:var(--ink); font-weight:700; margin:0; }
+  p{ margin:0; }
+  a{ color:var(--accent-deep); }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  code{ font-family:"IBM Plex Mono", monospace; font-size:.88em; background:var(--paper-raised); border:1px solid var(--line); border-radius:4px; padding:1px 5px; word-break:break-all; }
+
+  .wrap{ max-width:1000px; margin:0 auto; padding:24px 24px 72px; }
+
+  header.top{ display:flex; align-items:center; justify-content:space-between; gap:14px 20px; flex-wrap:wrap; margin-bottom:14px; }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  .brand h1{ font-size:22px; }
+  .brand .tag{ font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .nav{ display:flex; gap:4px; flex-wrap:wrap; }
+  .nav a{ font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted); text-decoration:none; padding:5px 10px; border-radius:6px; }
+  .nav a:hover{ color:var(--ink); background:var(--paper-raised); }
+  .nav a.here{ color:var(--accent-deep); background:var(--accent-soft); }
+
+  .bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin-bottom:24px; }
+  .bar .net{ display:flex; align-items:center; gap:8px; font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--ink-soft); }
+  .bar .net .dot{ width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-soft); }
+  .bar .net .dot.off{ background:var(--muted); box-shadow:0 0 0 3px var(--paper-raised); }
+  button{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; cursor:pointer; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--ink); }
+  button:hover:not(:disabled){ border-color:var(--accent); color:var(--accent-deep); }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  :root[data-theme="dark"] button.primary, :root:not([data-theme="light"]) button.primary{ color:#08201f; }
+
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .grid{ grid-template-columns:1fr; } }
+
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; }
+  .card h2{ font-size:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .card h3{ font-size:13px; font-family:"IBM Plex Mono", monospace; font-weight:500; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .card .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .card .addr{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--muted); margin-top:2px; }
+
+  .row{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .row:last-child{ border-bottom:none; }
+  .row .l{ color:var(--muted); }
+  .row .v{ font-family:"IBM Plex Mono", monospace; color:var(--ink); text-align:right; }
+  .row .v.big{ font-size:18px; font-weight:600; }
+  .row .v.accent{ color:var(--accent-deep); }
+  .row .v.good{ color:var(--good); } .row .v.warn{ color:var(--warn); }
+
+  .pill{ display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono", monospace; font-size:11px; padding:3px 9px; border-radius:100px; font-weight:500; }
+  .pill::before{ content:""; width:6px; height:6px; border-radius:50%; }
+  .pill.watching{ color:var(--good); background:var(--good-soft); } .pill.watching::before{ background:var(--good); }
+  .pill.holding{ color:var(--accent-deep); background:var(--accent-soft); } .pill.holding::before{ background:var(--accent); }
+  .pill.closed{ color:var(--risk); background:var(--risk-soft); } .pill.closed::before{ background:var(--risk); }
+  .pill.muted{ color:var(--muted); background:var(--paper-raised); } .pill.muted::before{ background:var(--muted); }
+
+  /* band detail */
+  .pdetail{ display:grid; grid-template-columns:1.5fr 1fr; gap:26px; margin-top:16px; }
+  @media (max-width:800px){ .pdetail{ grid-template-columns:1fr; } }
+  .block{ margin-bottom:20px; }
+  .block:last-child{ margin-bottom:0; }
+  .block-label{ font-family:"IBM Plex Mono", monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .band-svg{ width:100%; height:auto; display:block; }
+  .legend{ display:flex; flex-wrap:wrap; gap:12px; margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); font-family:"IBM Plex Mono", monospace; }
+  .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+
+  .gauge{ height:12px; background:var(--paper-raised); border-radius:100px; position:relative; margin:24px 0 8px; }
+  .gauge .safe{ position:absolute; top:0; bottom:0; background:var(--muted); opacity:.22; }
+  .gauge .fill{ position:absolute; left:0; top:0; bottom:0; border-radius:100px; background:var(--accent); }
+  .gauge .mark{ position:absolute; top:-5px; bottom:-5px; width:2px; background:var(--ink); }
+  .gauge .mark::after{ content:attr(data-l); position:absolute; top:-17px; left:50%; transform:translateX(-50%); font-family:"IBM Plex Mono", monospace; font-size:10px; color:var(--ink-soft); white-space:nowrap; }
+  .gauge-ends{ display:flex; justify-content:space-between; font-family:"IBM Plex Mono", monospace; font-size:10px; color:var(--muted); }
+
+  .mrow{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .mrow:last-child{ border-bottom:none; }
+  .mrow .l{ color:var(--muted); }
+  .mrow .v{ font-family:"IBM Plex Mono", monospace; color:var(--ink); }
+  .mrow .v.good{ color:var(--good); } .mrow .v.warn{ color:var(--warn); } .mrow .v.muted{ color:var(--muted); }
+  .good{ color:var(--good); } .warn{ color:var(--warn); }
+
+  .act-row{ display:grid; grid-template-columns:96px 1fr auto; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:12px; }
+  .act-row:last-child{ border-bottom:none; }
+  .act-row .blk{ color:var(--muted); font-family:"IBM Plex Mono", monospace; }
+  .act-row .what{ font-family:"IBM Plex Mono", monospace; color:var(--ink); }
+  .act-row .tx{ font-family:"IBM Plex Mono", monospace; }
+
+  form.dep{ display:grid; gap:12px; margin-top:6px; }
+  .field{ display:grid; gap:5px; }
+  .field label{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  select, input[type=text]{ font-family:"IBM Plex Mono", monospace; font-size:13px; padding:9px 11px; border-radius:8px; border:1px solid var(--line); background:var(--paper); color:var(--ink); width:100%; }
+  .depgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px){ .depgrid{ grid-template-columns:1fr; } }
+  .cmd{ background:var(--paper-raised); border:1px solid var(--line); border-radius:8px; padding:12px; font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--ink-soft); white-space:pre-wrap; word-break:break-all; margin-top:4px; }
+  .msg{ font-size:12px; padding:9px 12px; border-radius:8px; margin-top:4px; }
+  .msg.ok{ color:var(--good); background:var(--good-soft); }
+  .msg.err{ color:var(--risk); background:var(--risk-soft); }
+  .msg.info{ color:var(--ink-soft); background:var(--paper-raised); }
+
+  .badge{ display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono", monospace; font-size:11px; padding:2px 8px; border-radius:100px; font-weight:500; }
+  .badge::before{ content:""; width:6px; height:6px; border-radius:50%; }
+  .badge.pending{ color:var(--warn); background:var(--warn-soft); } .badge.pending::before{ background:var(--warn); }
+
+  footer{ margin-top:40px; padding-top:18px; border-top:1px solid var(--line); }
+  footer p{ font-size:12px; color:var(--muted); max-width:80ch; }
+  .skeleton{ color:var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Rangekeeper</h1><span class="tag">App</span></div>
+    <nav class="nav">
+      <a href="index.html">Overview</a>
+      <a href="app.html" class="here" aria-current="page">App</a>
+      <a href="status.html">Console</a>
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="bar">
+    <div class="net"><span class="dot" id="netdot"></span> <span id="netlabel">Monad testnet · reading live state…</span></div>
+    <button id="connect" class="primary">Connect wallet</button>
+  </div>
+
+  <div class="card" id="pending-card" hidden>
+    <h2>Contracts not yet deployed <span class="badge pending">not yet live</span></h2>
+    <p class="sub">
+      This page reads live state from <code>VaultManager</code> and each tier's <code>PairVault</code> —
+      a vault that is its own sole Uniswap v3 liquidity provider and recenters its own band. That
+      isn't deployed to Monad testnet yet. Once <code>VAULT_MANAGER_ADDRESS</code> is filled in
+      below, this page starts reading it live.
+    </p>
+  </div>
+
+  <div class="grid" id="vaults"></div>
+
+  <div class="card" id="tier-select-card" hidden>
+    <div class="field">
+      <label for="tier-select">Band + economics for</label>
+      <select id="tier-select"></select>
+    </div>
+  </div>
+
+  <div class="card" id="band-card" hidden>
+    <h2 id="band-title">Vault band</h2>
+    <p class="addr" id="band-meta">reading <code>band()</code> / pool <code>slot0()</code>…</p>
+    <div id="band-body"><div class="mrow skeleton"><span class="l">loading live band + pool state…</span><span class="v"></span></div></div>
+  </div>
+
+  <div class="card" id="activity-card" hidden>
+    <h2>Vault economics</h2>
+    <p class="sub">Only real numbers below — nothing estimated. Fees are valued at today's price; each recenter's
+       cost or gain is read from the vault's own price feed at the exact historical block it happened in, not
+       guessed. The public RPC caps log queries at 100 blocks per call, so this reads backward from the chain
+       tip in batches rather than all at once.</p>
+    <div id="econ-body"><button id="act-load" type="button">Scan vault history</button></div>
+    <h3 style="margin-top:22px">Recenter log</h3>
+    <div id="activity-body"><span class="skeleton" style="font-size:12px">scan above to load</span></div>
+  </div>
+
+  <div class="card" id="faucet-card" hidden>
+    <h2>Get demo tokens</h2>
+    <p class="sub">DMOA/DMOB are this testnet's stand-in for a second real asset (see the footer) — minting them is
+       normally owner-only, so this faucet is what actually lets a new wallet try the deposit flow below.
+       One claim gives <span id="faucet-amounts">1,000 of each</span>, once per wallet per day. You'll also need a
+       little real testnet MON for gas — get that free at
+       <a href="https://faucet.monad.xyz" target="_blank" rel="noopener">faucet.monad.xyz</a> first (needs a quick
+       human check there, so it isn't automatable from here).</p>
+    <button type="button" id="faucet-claim" class="primary">Claim demo tokens</button>
+    <div id="faucet-msg"></div>
+  </div>
+
+  <div class="card" id="deposit-card" hidden>
+    <h2>Deposit into a vault</h2>
+    <p class="sub">Both steps sign from your wallet. The priced deposit (<code>depositWithPriceUpdate</code>) needs a
+       fresh Pyth price pushed in the same transaction — a serverless function fetches that (it holds the
+       Hermes API key so your browser never has to), then your wallet signs the actual deposit.</p>
+    <form class="dep" id="depform">
+      <div class="depgrid">
+        <div class="field">
+          <label for="dep-vault">Vault</label>
+          <select id="dep-vault"></select>
+        </div>
+        <div class="field">
+          <label for="dep-asset">Asset</label>
+          <select id="dep-asset"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dep-amt">Amount (human units)</label>
+        <input type="text" id="dep-amt" placeholder="e.g. 20" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="depgrid">
+        <button type="button" id="dep-approve">Approve</button>
+        <button type="button" id="dep-build" class="primary">Deposit</button>
+      </div>
+      <div id="dep-msg"></div>
+    </form>
+  </div>
+
+  <footer>
+    <p>Reads use the public RPC <code>https://testnet-rpc.monad.xyz</code> and need no wallet — pool price is read
+       straight from each vault's own Uniswap v3 pool via its public <code>slot0()</code>, no indexer or oracle
+       round-trip needed for price itself. Writes go through <code>window.ethereum</code> on
+       chain&nbsp;10143. AUSD here is a separate stablecoin, not affiliated with Aurora.</p>
+  </footer>
+</div>
+
+<script type="module">
+import {
+  createPublicClient, createWalletClient, custom, http, defineChain,
+  parseAbi, parseAbiItem, formatUnits, parseUnits, getAddress
+} from "https://esm.sh/viem@2.21.55";
+
+const monad = defineChain({
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } },
+  blockExplorers: { default: { name: "MonadScan", url: "https://testnet.monadscan.com" } },
+});
+const pub = createPublicClient({ chain: monad, transport: http() });
+
+const ADDR = {
+  vaultManager: "0x28AC946761572E3b4FeA03163Dc894997b9677FE",
+  v3Factory: "0x7Dc4f0eC255F10AB04D46E118Aa4cD2bBCE375B9",
+  paramsRegistry: "0x8F2A67eb13b3BE226439e0cc446755AA1664a08b",
+  pyth: "0x2880aB155794e7179c9eE2e38200202908C17B43",
+  // DemoToken.mint is owner-only — without this, only the deploying wallet
+  // could ever hold DMOA/DMOB, so a stranger connecting a wallet would have
+  // nothing to deposit and no way to get anything. See src/demo/DemoTokenFaucet.sol.
+  demoFaucet: "0x1127012EA9565880aa49Eab79487E1736E228Fb0",
+};
+// Which tiers to show — each one is resolved live via vaultOfTier(tier), so no
+// vault address needs to be hardcoded here. deployBlock bounds how far back a
+// history scan will ever go (nothing can exist before the vault did) — read
+// from broadcast/SetupVault.s.sol and SetupTier2.s.sol's own receipts.
+const TIERS = [
+  { tier: 1, label: "Tier 1 vault (DMOB/DMOA)", deployBlock: 62781201n },
+  { tier: 2, label: "Tier 2 vault (USDC/DMOA)", deployBlock: 62781418n },
+];
+
+const KNOWN_SYMBOLS = {
+  "0x534b2f3A21130d7a60830c2Df862319e593943A3": "USDC",
+  "0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC": "AUSD",
+};
+
+const VAULT_MANAGER_ABI = parseAbi([
+  "function vaultOfTier(uint8) view returns (address)",
+  "function paused(uint8) view returns (bool)",
+  "function lastRecenterAt(uint8) view returns (uint256)",
+  "function MIN_RECENTER_INTERVAL() view returns (uint256)",
+]);
+const VAULT_ABI = parseAbi([
+  "function pool() view returns (address)",
+  "function assetA() view returns (address)",
+  "function assetB() view returns (address)",
+  "function decimalsA() view returns (uint8)",
+  "function decimalsB() view returns (uint8)",
+  "function tvlA() view returns (uint256)",
+  "function tvlB() view returns (uint256)",
+  "function totalShares() view returns (uint256)",
+  "function navWad() view returns (uint256)",
+  "function utilization() view returns (uint256)",
+  "function sharesOf(address) view returns (uint256)",
+  "function band() view returns (int24 tickLower, int24 tickUpper, uint128 liquidity)",
+  "function priceIdA() view returns (bytes32)",
+  "function priceIdB() view returns (bytes32)",
+  "function depositWithPriceUpdate(address asset, uint256 amount, bytes[] priceUpdateData) payable returns (uint256 shares)",
+  "function valueOfAssetA(uint256) view returns (uint256)",
+  "function valueOfAssetB(uint256) view returns (uint256)",
+]);
+// A Uniswap v3 pool's own public state — a plain view call, no storage-slot
+// math needed to read the live price.
+const POOL_ABI = parseAbi(["function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16, uint16, uint16, uint8, bool)"]);
+const PYTH_ABI = parseAbi(["function getUpdateFee(bytes[] updateData) view returns (uint256)"]);
+const ERC20_ABI = parseAbi([
+  "function symbol() view returns (string)",
+  "function approve(address,uint256) returns (bool)",
+]);
+const FAUCET_ABI = parseAbi([
+  "function claim() returns (uint256 paidA, uint256 paidB)",
+  "function timeUntilNextClaim(address) view returns (uint256)",
+  "function claimAmountA() view returns (uint256)",
+  "function claimAmountB() view returns (uint256)",
+]);
+const PARAMS_ABI = parseAbi([
+  "function paramsOf(uint8) view returns ((uint256 zStar,uint256 kMax,uint256 sigmaMax,uint256 lcrMin,uint256 mStar,uint256 rSanityLow,uint256 rSanityHigh,uint32 version))",
+]);
+const RECENTERED_EVENT = parseAbiItem(
+  "event Recentered(uint8 indexed tier, int24 oldTickLower, int24 oldTickUpper, int24 newTickLower, int24 newTickUpper, uint128 liquidityAdded)"
+);
+const PAUSED_EVENT = parseAbiItem("event RecenterPaused(uint8 indexed tier, int24 oldTickLower, int24 oldTickUpper)");
+const DEPOSITED_EVENT = parseAbiItem("event Deposited(address indexed depositor, address asset, uint256 amount, uint256 shares)");
+const FEES_COLLECTED_EVENT = parseAbiItem("event FeesCollected(uint256 amount0, uint256 amount1)");
+
+// eth_getLogs on the public Monad testnet RPC is hard-capped at a 100-block
+// range per call (confirmed directly: asking for more returns
+// "eth_getLogs is limited to a 100 range"), so any history scan has to be
+// chunked — HIST_CHUNK is that hard limit, HIST_BATCH is how far back one
+// "Scan further back" click walks (30 chunked calls per event type).
+const HIST_CHUNK = 100n;
+const HIST_BATCH = 3000n;
+// tier -> { scannedFrom, scannedTo, deposits[], feesCollected[], recenters[], paused[] }
+// Shared by the economics card and the per-vault "held vs. vault" line so
+// both read the same scanned window instead of scanning twice.
+const history = {};
+
+const $ = (id) => document.getElementById(id);
+const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+const fmtWad = (x) => Number(formatUnits(x, 18));
+const money = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+const signed = (n) => (n >= 0 ? "+$" + money(n) : "−$" + money(Math.abs(n)));
+const explorer = (kind, v) => `https://testnet.monadscan.com/${kind}/${v}`;
+const tickToSqrtPrice = (tick) => Math.pow(1.0001, tick / 2);
+// band() has 3 outputs, so viem's readContract returns a plain tuple/array
+// (no named properties) — this gives call sites a named object instead.
+const bandOf = ([tickLower, tickUpper, liquidity]) => ({ tickLower, tickUpper, liquidity });
+
+let wallet = null, account = null;
+const vaultMeta = {}; // key -> { symA, symB, decA, decB, assetA, assetB, address, tier }
+let resolvedVaults = []; // [{ tier, label, address }]
+
+const symbolCache = {};
+async function symbolOf(addr) {
+  const cs = getAddress(addr);
+  if (KNOWN_SYMBOLS[cs]) return KNOWN_SYMBOLS[cs];
+  if (symbolCache[cs]) return symbolCache[cs];
+  // Multiple tiers can share an asset (e.g. DMOA appears in more than one
+  // pair) — caching means its symbol is only ever fetched once per page
+  // load instead of once per vault card, which matters on a public RPC
+  // that's already under real load from everything else this page reads.
+  try {
+    const sym = await pub.readContract({ address: cs, abi: ERC20_ABI, functionName: "symbol" });
+    symbolCache[cs] = sym;
+    return sym;
+  } catch { return short(cs); }
+}
+
+/* ---------- pool price via slot0() — a plain public view call ---------- */
+async function readPoolSqrtPrice(poolAddress) {
+  const [sqrtPriceX96, tick] = await pub.readContract({
+    address: poolAddress, abi: POOL_ABI, functionName: "slot0",
+  });
+  const sqrtP = Number(sqrtPriceX96) / 2 ** 96;
+  return { sqrtP, price: sqrtP * sqrtP, tick };
+}
+
+/* ---------- vault cards ---------- */
+async function loadVaultCard(v) {
+  const call = (functionName, args = []) => pub.readContract({ address: v.address, abi: VAULT_ABI, functionName, args });
+  const [pool, assetA, assetB, decA, decB, tvlA, tvlB, shares, rawBand, paused, priceIdA, priceIdB] = await Promise.all([
+    call("pool"), call("assetA"), call("assetB"), call("decimalsA"), call("decimalsB"),
+    call("tvlA"), call("tvlB"), call("totalShares"), call("band"),
+    pub.readContract({ address: ADDR.vaultManager, abi: VAULT_MANAGER_ABI, functionName: "paused", args: [v.tier] }),
+    call("priceIdA"), call("priceIdB"),
+  ]);
+  const band = bandOf(rawBand);
+  const [symA, symB] = await Promise.all([symbolOf(assetA), symbolOf(assetB)]);
+  let nav = null, util = null;
+  try { nav = await call("navWad"); } catch {}
+  try { util = await call("utilization"); } catch {}
+  vaultMeta[v.tier] = {
+    symA, symB, decA: Number(decA), decB: Number(decB), assetA, assetB, pool, address: v.address, tier: v.tier,
+    priceIdA: priceIdA.slice(2), priceIdB: priceIdB.slice(2), // no 0x prefix — Hermes expects raw hex ids
+  };
+
+  const navTxt = nav === null ? '<span class="skeleton">feed stale — push a Pyth update</span>' : "$" + money(fmtWad(nav));
+  const utilTxt = util === null ? "—" : (fmtWad(util) * 100).toFixed(2) + "%";
+  const bandOpen = band.liquidity > 0n;
+  const statusPill = paused ? '<span class="pill closed">paused</span>'
+    : bandOpen ? '<span class="pill holding">band open</span>'
+    : '<span class="pill watching">no band</span>';
+
+  return `
+    <div class="card">
+      <h2>${v.label} ${statusPill}</h2>
+      <p class="addr"><a href="${explorer("address", v.address)}" target="_blank" rel="noopener">${v.address}</a></p>
+      <div class="row"><span class="l">NAV (Pyth-priced)</span><span class="v big accent">${navTxt}</span></div>
+      <div class="row"><span class="l">Idle ${symA} / ${symB}</span><span class="v">${money(Number(formatUnits(tvlA, Number(decA))))} / ${money(Number(formatUnits(tvlB, Number(decB))))}</span></div>
+      <div class="row"><span class="l">Total shares</span><span class="v">${money(fmtWad(shares))}</span></div>
+      <div class="row"><span class="l">Utilization (in band)</span><span class="v">${utilTxt}</span></div>
+      <div class="row" id="you-row-${v.tier}" hidden><span class="l">Your shares</span><span class="v accent" id="you-val-${v.tier}"></span></div>
+      <div class="row" id="you-hold-row-${v.tier}" hidden><span class="l">Held vs. in vault</span><span class="v" id="you-hold-val-${v.tier}"></span></div>
+    </div>`;
+}
+
+/* ---------- band detail (price vs. range vs. sanity edge band) ---------- */
+function bandSvg({ sqrtPa, sqrtPb, sqrtP, priceLabel, paLabel, pbLabel, rLow, rHigh }) {
+  const W = 640, L = 24, R = 616, span = R - L;
+  const pad = 0.18 * (sqrtPb - sqrtPa);
+  const lo = sqrtPa - pad, hi = sqrtPb + pad;
+  const x = (s) => L + ((s - lo) / (hi - lo)) * span;
+  const xa = x(sqrtPa), xb = x(sqrtPb), xp = x(sqrtP);
+  const clamp = (n) => Math.max(L, Math.min(R, n));
+  let sanity = "";
+  if (rLow != null && rHigh != null) {
+    const xl = x(sqrtPa + rLow * (sqrtPb - sqrtPa));
+    const xh = x(sqrtPa + rHigh * (sqrtPb - sqrtPa));
+    sanity = `
+      <line x1="${xl.toFixed(1)}" y1="40" x2="${xl.toFixed(1)}" y2="74" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3,3"></line>
+      <line x1="${xh.toFixed(1)}" y1="40" x2="${xh.toFixed(1)}" y2="74" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3,3"></line>
+      <text x="${xl.toFixed(1)}" y="90" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--muted)">recenter band</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} 104" class="band-svg" role="img" aria-label="price versus band">
+    <rect x="${xa.toFixed(1)}" y="46" width="${(xb - xa).toFixed(1)}" height="18" fill="var(--accent-soft)"></rect>
+    <rect x="${L}" y="46" width="${span}" height="18" rx="3" fill="none" stroke="var(--line)"></rect>
+    <line x1="${xa.toFixed(1)}" y1="40" x2="${xa.toFixed(1)}" y2="70" stroke="var(--ink-soft)" stroke-width="1.5"></line>
+    <line x1="${xb.toFixed(1)}" y1="40" x2="${xb.toFixed(1)}" y2="70" stroke="var(--ink-soft)" stroke-width="1.5"></line>
+    <text x="${xa.toFixed(1)}" y="34" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-soft)">${paLabel}</text>
+    <text x="${xb.toFixed(1)}" y="34" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-soft)">${pbLabel}</text>
+    ${sanity}
+    <line x1="${clamp(xp).toFixed(1)}" y1="34" x2="${clamp(xp).toFixed(1)}" y2="46" stroke="var(--accent-deep)" stroke-width="1.5"></line>
+    <circle cx="${clamp(xp).toFixed(1)}" cy="55" r="6" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"></circle>
+    <text x="${clamp(xp).toFixed(1)}" y="26" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--accent-deep)">NOW ${priceLabel}</text>
+  </svg>`;
+}
+
+async function loadBandDetail(v) {
+  v = v || resolvedVaults.find((x) => String(x.tier) === $("tier-select")?.value) || resolvedVaults[0];
+  if (!v) return;
+  try {
+    const [rawBand, poolAddress, params, paused, lastRecenterAt, minInterval] = await Promise.all([
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "band" }),
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "pool" }),
+      pub.readContract({ address: ADDR.paramsRegistry, abi: PARAMS_ABI, functionName: "paramsOf", args: [v.tier] }).catch(() => null),
+      pub.readContract({ address: ADDR.vaultManager, abi: VAULT_MANAGER_ABI, functionName: "paused", args: [v.tier] }),
+      pub.readContract({ address: ADDR.vaultManager, abi: VAULT_MANAGER_ABI, functionName: "lastRecenterAt", args: [v.tier] }),
+      pub.readContract({ address: ADDR.vaultManager, abi: VAULT_MANAGER_ABI, functionName: "MIN_RECENTER_INTERVAL" }),
+    ]);
+    const band = bandOf(rawBand);
+
+    $("band-title").innerHTML = `${v.label}'s band ${paused ? '<span class="pill closed">paused</span>' : band.liquidity > 0n ? '<span class="pill holding">open</span>' : '<span class="pill watching">none open</span>'}`;
+
+    if (band.liquidity === 0n) {
+      $("band-meta").textContent = paused
+        ? "circuit breaker closed the band — waiting for calmer volatility before it reopens"
+        : "no band open yet — the next recenter call opens one unconditionally";
+      $("band-body").innerHTML = `<div class="mrow"><span class="l">Status</span><span class="v muted">${paused ? "paused" : "not opened yet"}</span></div>`;
+      return;
+    }
+
+    $("band-meta").innerHTML =
+      `tier ${v.tier} · ticks [${band.tickLower}, ${band.tickUpper}] · liquidity ${money(fmtWad(band.liquidity))} · pool <a href="${explorer("address", poolAddress)}" target="_blank" rel="noopener">${short(poolAddress)}</a>`;
+
+    const sqrtPa = tickToSqrtPrice(band.tickLower), sqrtPb = tickToSqrtPrice(band.tickUpper);
+    let pool = null;
+    try { pool = await readPoolSqrtPrice(poolAddress); } catch {}
+    const sqrtP = pool ? pool.sqrtP : (sqrtPa + sqrtPb) / 2;
+    const price = pool ? pool.price : sqrtP * sqrtP;
+
+    const r = (sqrtP - sqrtPa) / (sqrtPb - sqrtPa);
+    const paPrice = sqrtPa ** 2, pbPrice = sqrtPb ** 2;
+    const dMin = Math.min(Math.log(price / paPrice), Math.log(pbPrice / price));
+
+    const haveParams = params && params.zStar > 0n;
+    const rLow = haveParams ? fmtWad(params.rSanityLow) : null;
+    const rHigh = haveParams ? fmtWad(params.rSanityHigh) : null;
+
+    const now = Math.floor(Date.now() / 1000);
+    const cooldownEnds = Number(lastRecenterAt) + Number(minInterval);
+    const cooldownLeft = Math.max(0, cooldownEnds - now);
+
+    const edgeWord = (rLow != null && (r <= rLow || r >= rHigh)) ? "near the recenter band" : "centered";
+    const safeStyle = (rLow != null)
+      ? `left:${(rLow * 100).toFixed(1)}%; width:${((rHigh - rLow) * 100).toFixed(1)}%;`
+      : "left:15%; width:70%;";
+
+    const paL = paPrice.toFixed(4), pbL = pbPrice.toFixed(4), nowL = price.toFixed(4);
+    const poolNote = pool ? `tick ${pool.tick}` : "slot0 read failed — showing band midpoint";
+
+    const paramRows = haveParams ? `
+      <div class="mrow"><span class="l">Trigger z* (eq. 2)</span><span class="v">${fmtWad(params.zStar).toFixed(5)}</span></div>
+      <div class="mrow"><span class="l">Volatility ceiling σmax</span><span class="v">${fmtWad(params.sigmaMax).toFixed(3)}</span></div>
+      <div class="mrow"><span class="l">Sanity edge band [rLow, rHigh]</span><span class="v">${rLow.toFixed(2)} – ${rHigh.toFixed(2)}</span></div>`
+      : `<div class="mrow"><span class="l">Tier params</span><span class="v muted">${params === null ? "not readable — check ParamsRegistry address" : "queued — pending the 2-day timelock"}</span></div>`;
+
+    $("band-body").innerHTML = `
+      <div class="pdetail">
+        <div>
+          <div class="block">
+            <div class="block-label">Price vs. band${haveParams ? " vs. recenter band" : ""}</div>
+            ${bandSvg({ sqrtPa, sqrtPb, sqrtP, priceLabel: nowL, paLabel: paL, pbLabel: pbL, rLow, rHigh })}
+            <div class="legend">
+              <span><i style="background:var(--accent-soft); border:1px solid var(--accent)"></i> in band (Pa–Pb)</span>
+              <span><i style="background:var(--accent)"></i> current price · ${poolNote}</span>
+              ${haveParams ? '<span><i style="background:var(--muted)"></i> recenter band (dashed)</span>' : ""}
+            </div>
+          </div>
+          <div class="block">
+            <div class="block-label">Position in band r — a recenter needs r outside this band, plus the z* trigger</div>
+            <div class="gauge">
+              <div class="safe" style="${safeStyle}"></div>
+              <div class="fill" style="width:${(Math.max(0, Math.min(1, r)) * 100).toFixed(1)}%"></div>
+              <div class="mark" data-l="r = ${r.toFixed(3)}" style="left:${(Math.max(0, Math.min(1, r)) * 100).toFixed(1)}%"></div>
+            </div>
+            <div class="gauge-ends"><span>lower edge · 0.00</span><span>${edgeWord}</span><span>1.00 · upper edge</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="block-label">Live metrics</div>
+          <div class="mrow"><span class="l">Distance to edge d_min (eq. 1)</span><span class="v">${dMin.toFixed(4)}</span></div>
+          <div class="mrow"><span class="l">Cooldown remaining</span><span class="v ${cooldownLeft>0?'warn':'good'}">${cooldownLeft > 0 ? cooldownLeft + "s" : "ready"}</span></div>
+          ${paramRows}
+        </div>
+      </div>`;
+  } catch (e) {
+    $("band-body").innerHTML = `<div class="msg err">Couldn't read the band: ${e.shortMessage || e.message}</div>`;
+  }
+}
+
+/* ---------- vault economics (fees harvested, recenter cost/gain, net) ---------- */
+// Walks backward from the chain tip in HIST_BATCH-sized pages (each itself
+// chunked to HIST_CHUNK for the RPC's 100-block cap), accumulating real
+// events into `history[tier]`. Re-render is cheap, so every page re-derives
+// the full economics summary from everything scanned so far rather than
+// trying to merge deltas.
+async function scanHistory(v) {
+  const btn = $("act-load"), more = $("act-more");
+  const active = more || btn;
+  active.disabled = true; active.textContent = "scanning…";
+  try {
+    const h = history[v.tier] ?? (history[v.tier] = { scannedFrom: null, scannedTo: null, deposits: [], feesCollected: [], recenters: [], paused: [] });
+    const head = await pub.getBlockNumber();
+    if (h.scannedTo === null) h.scannedTo = head;
+    const bottom = v.deployBlock ?? 0n;
+    const prevFrom = h.scannedFrom === null ? head + 1n : h.scannedFrom;
+    if (prevFrom > bottom) {
+      const toBlock = prevFrom - 1n;
+      const fromBlock = toBlock - HIST_BATCH + 1n > bottom ? toBlock - HIST_BATCH + 1n : bottom;
+      for (let start = fromBlock; start <= toBlock; start += HIST_CHUNK) {
+        const end = start + HIST_CHUNK - 1n > toBlock ? toBlock : start + HIST_CHUNK - 1n;
+        const [dep, fees, rec, pau] = await Promise.all([
+          pub.getLogs({ address: v.address, event: DEPOSITED_EVENT, fromBlock: start, toBlock: end }),
+          pub.getLogs({ address: v.address, event: FEES_COLLECTED_EVENT, fromBlock: start, toBlock: end }),
+          pub.getLogs({ address: ADDR.vaultManager, event: RECENTERED_EVENT, args: { tier: v.tier }, fromBlock: start, toBlock: end }),
+          pub.getLogs({ address: ADDR.vaultManager, event: PAUSED_EVENT, args: { tier: v.tier }, fromBlock: start, toBlock: end }),
+        ]);
+        h.deposits.push(...dep);
+        h.feesCollected.push(...fees);
+        h.recenters.push(...rec);
+        h.paused.push(...pau);
+      }
+      h.scannedFrom = fromBlock;
+    }
+    await renderEconomics(v);
+    await updateHoldVsVault(v);
+  } catch (e) {
+    $("econ-body").innerHTML = `<div class="msg err">History scan failed: ${e.shortMessage || e.message}</div>`;
+  }
+}
+
+async function renderEconomics(v) {
+  const h = history[v.tier];
+  if (!h) return;
+
+  // Fees: valued at TODAY's price via the vault's own oracle config — the
+  // contract doesn't record a price snapshot at collection time, so this is
+  // a real number but a current-price approximation, and is labeled as one.
+  let feesWad = 0n;
+  for (const l of h.feesCollected) {
+    try {
+      const [vA, vB] = await Promise.all([
+        pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "valueOfAssetA", args: [l.args.amount0] }),
+        pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "valueOfAssetB", args: [l.args.amount1] }),
+      ]);
+      feesWad += vA + vB;
+    } catch {}
+  }
+
+  // Recenter cost/gain: navWad() re-read at the exact block before and the
+  // exact block of each Recentered event — this uses the price the vault's
+  // own oracle actually had on-chain at that historical moment, not today's,
+  // so (unlike fees above) it is not an approximation. Falls back to "not
+  // available" per-event if the RPC has already pruned that historical state
+  // rather than guessing.
+  let impactWad = 0n, impactOk = 0;
+  for (const l of h.recenters) {
+    try {
+      const [before, after] = await Promise.all([
+        pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "navWad", blockNumber: l.blockNumber - 1n }),
+        pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "navWad", blockNumber: l.blockNumber }),
+      ]);
+      impactWad += after - before;
+      impactOk++;
+    } catch {}
+  }
+
+  const netWad = feesWad + impactWad;
+  const atBottom = h.scannedFrom !== null && h.scannedFrom <= (v.deployBlock ?? 0n);
+  const impactLabel = h.recenters.length === 0
+    ? "no recenters in the scanned window yet"
+    : `${impactOk}/${h.recenters.length} priced from their own historical block`;
+
+  $("econ-body").innerHTML = `
+    <div class="row"><span class="l">Fees harvested (${h.feesCollected.length}× collectFees, valued at today's price)</span><span class="v accent">$${money(fmtWad(feesWad))}</span></div>
+    <div class="row"><span class="l">Recenter cost/gain (${impactLabel})</span><span class="v ${impactWad >= 0n ? "good" : "warn"}">${signed(fmtWad(impactWad))}</span></div>
+    <div class="row"><span class="l">Net</span><span class="v big ${netWad >= 0n ? "good" : "warn"}">${signed(fmtWad(netWad))}</span></div>
+    <div class="row"><span class="l">Scanned window</span><span class="v">block ${h.scannedFrom} – ${h.scannedTo}${atBottom ? " (reaches vault deployment)" : ""}</span></div>
+    ${atBottom ? "" : '<button id="act-more" type="button" style="margin-top:8px">Scan further back</button>'}
+  `;
+  if (!atBottom) $("act-more").addEventListener("click", () => scanHistory(v));
+
+  renderActivityLog(h);
+}
+
+function renderActivityLog(h) {
+  const found = [];
+  for (const l of h.recenters) found.push({ block: l.blockNumber, what: `tier ${l.args.tier} recentered [${l.args.oldTickLower},${l.args.oldTickUpper}] → [${l.args.newTickLower},${l.args.newTickUpper}]`, tx: l.transactionHash });
+  for (const l of h.paused) found.push({ block: l.blockNumber, what: `tier ${l.args.tier} circuit breaker paused at [${l.args.oldTickLower},${l.args.oldTickUpper}]`, tx: l.transactionHash });
+  found.sort((a, b) => Number(b.block - a.block));
+  if (!found.length) {
+    $("activity-body").innerHTML = `<div class="msg info">No recenter events in the scanned window.</div>`;
+  } else {
+    $("activity-body").innerHTML = found.map((f) =>
+      `<div class="act-row"><span class="blk">block ${f.block}</span><span class="what">${f.what}</span>
+       <a class="tx" href="${explorer("tx", f.tx)}" target="_blank" rel="noopener">${short(f.tx)}</a></div>`).join("");
+  }
+}
+
+/* ---------- held vs. in vault (per connected wallet, real deposit history) ---------- */
+async function updateHoldVsVault(v) {
+  if (!account) return;
+  const h = history[v.tier];
+  const row = $(`you-hold-row-${v.tier}`);
+  const m = vaultMeta[v.tier];
+  if (!h || !row || !m) return;
+
+  const mine = h.deposits.filter((l) => l.args.depositor.toLowerCase() === account.toLowerCase());
+  if (!mine.length) {
+    row.hidden = true;
+    return;
+  }
+  let rawA = 0n, rawB = 0n;
+  for (const l of mine) {
+    if (getAddress(l.args.asset) === getAddress(m.assetA)) rawA += l.args.amount;
+    else rawB += l.args.amount;
+  }
+  try {
+    // Both sides priced at the SAME current call — an apples-to-apples
+    // comparison, not "hold priced then, vault priced now."
+    const [holdA, holdB, sh, total, nav] = await Promise.all([
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "valueOfAssetA", args: [rawA] }),
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "valueOfAssetB", args: [rawB] }),
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "sharesOf", args: [account] }),
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "totalShares" }),
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "navWad" }),
+    ]);
+    const holdValue = fmtWad(holdA + holdB);
+    const vaultValue = total > 0n ? (fmtWad(nav) * fmtWad(sh)) / fmtWad(total) : 0;
+    const delta = vaultValue - holdValue;
+    const cls = delta >= 0 ? "good" : "warn";
+    const word = delta >= 0 ? "ahead of" : "behind";
+    $(`you-hold-val-${v.tier}`).innerHTML =
+      `held $${money(holdValue)} · vault $${money(vaultValue)} · <span class="${cls}">${signed(delta)} ${word} holding</span>`;
+    row.hidden = false;
+  } catch {
+    row.hidden = true;
+  }
+}
+
+/* ---------- your position (folded into each vault card, not a separate card) ---------- */
+async function loadYou() {
+  if (!account) return;
+  for (const v of resolvedVaults) {
+    const row = $(`you-row-${v.tier}`);
+    const val = $(`you-val-${v.tier}`);
+    if (!row || !val) continue;
+    const [sh, total] = await Promise.all([
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "sharesOf", args: [account] }),
+      pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "totalShares" }),
+    ]);
+    if (sh === 0n) continue; // nothing to show for an account with no shares in this vault
+    let navTxt = "";
+    try {
+      const nav = await pub.readContract({ address: v.address, abi: VAULT_ABI, functionName: "navWad" });
+      if (total > 0n) navTxt = ` · ≈ $${money(fmtWad(nav) * fmtWad(sh) / fmtWad(total))}`;
+    } catch {}
+    val.textContent = `${money(fmtWad(sh))} shares${navTxt}`;
+    row.hidden = false;
+  }
+}
+
+/* ---------- deposit helper ---------- */
+function fillDepositForm() {
+  const vsel = $("dep-vault");
+  vsel.innerHTML = resolvedVaults.map((v) => `<option value="${v.tier}">${v.label}</option>`).join("");
+  syncAssetOptions();
+  vsel.addEventListener("change", syncAssetOptions);
+}
+function syncAssetOptions() {
+  const v = resolvedVaults.find((x) => String(x.tier) === $("dep-vault").value);
+  const m = vaultMeta[v.tier];
+  if (!m) return;
+  $("dep-asset").innerHTML = `<option value="A">${m.symA} (assetA)</option><option value="B">${m.symB} (assetB)</option>`;
+}
+function depSelection() {
+  const v = resolvedVaults.find((x) => String(x.tier) === $("dep-vault").value);
+  const m = vaultMeta[v.tier];
+  const side = $("dep-asset").value;
+  return {
+    v, token: side === "A" ? m.assetA : m.assetB, dec: side === "A" ? m.decA : m.decB, sym: side === "A" ? m.symA : m.symB,
+    feedId: side === "A" ? m.priceIdA : m.priceIdB,
+  };
+}
+function setMsg(kind, html) { const el = $("dep-msg"); el.className = "msg " + kind; el.innerHTML = html; }
+
+async function ensureWallet() {
+  if (!window.ethereum) throw new Error("No injected wallet found.");
+  if (!wallet) wallet = createWalletClient({ chain: monad, transport: custom(window.ethereum) });
+  const [a] = await wallet.requestAddresses();
+  account = a;
+  try { await wallet.switchChain({ id: monad.id }); }
+  catch (e) {
+    if (e.code === 4902 || /Unrecognized chain/i.test(e.message || "")) await wallet.addChain({ chain: monad });
+  }
+  return account;
+}
+
+function setFaucetMsg(kind, html) { const el = $("faucet-msg"); el.className = "msg " + kind; el.innerHTML = html; }
+
+$("faucet-claim").addEventListener("click", async () => {
+  const btn = $("faucet-claim");
+  try {
+    await ensureWallet();
+    const waitS = await pub.readContract({ address: ADDR.demoFaucet, abi: FAUCET_ABI, functionName: "timeUntilNextClaim", args: [account] });
+    if (waitS > 0n) {
+      const h = Math.floor(Number(waitS) / 3600), m = Math.floor((Number(waitS) % 3600) / 60);
+      return setFaucetMsg("err", `Already claimed — try again in ${h}h ${m}m.`);
+    }
+    btn.disabled = true;
+    setFaucetMsg("info", "Confirm in your wallet…");
+    const hash = await wallet.writeContract({ account, address: ADDR.demoFaucet, abi: FAUCET_ABI, functionName: "claim" });
+    setFaucetMsg("info", `Sent: <a href="${explorer("tx", hash)}" target="_blank" rel="noopener">${short(hash)}</a> — waiting…`);
+    await pub.waitForTransactionReceipt({ hash });
+    setFaucetMsg("ok", "Claimed — DMOA/DMOB should now show up in your wallet. Scroll down to deposit.");
+  } catch (e) {
+    setFaucetMsg("err", e.shortMessage || e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("dep-approve").addEventListener("click", async () => {
+  try {
+    const { v, token, dec, sym } = depSelection();
+    const amt = $("dep-amt").value.trim();
+    if (!amt || Number(amt) <= 0) return setMsg("err", "Enter an amount first.");
+    const raw = parseUnits(amt, dec);
+    await ensureWallet();
+    setMsg("info", `Approving ${amt} ${sym} to ${short(v.address)}…`);
+    const hash = await wallet.writeContract({ account, address: token, abi: ERC20_ABI, functionName: "approve", args: [v.address, raw] });
+    setMsg("info", `Approve sent: <a href="${explorer("tx", hash)}" target="_blank" rel="noopener">${short(hash)}</a> — waiting…`);
+    await pub.waitForTransactionReceipt({ hash });
+    setMsg("ok", `Approved. ${sym} allowance for the vault is now ≥ ${amt}. Now click Deposit.`);
+  } catch (e) { setMsg("err", e.shortMessage || e.message); }
+});
+
+/** Calls this site's own /api/pyth-update serverless function — it holds
+ *  HERMES_API_KEY server-side and returns the same binary.data[] hex blobs
+ *  fetchPythUpdateData (solver/src/pyth.ts) fetches directly, without ever
+ *  putting the key in browser-reachable code. */
+async function fetchPriceUpdateData(feedId) {
+  const res = await fetch(`/api/pyth-update?feedId=${feedId}`);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `price update fetch failed: ${res.status}`);
+  return body.data; // already 0x-prefixed
+}
+
+$("dep-build").addEventListener("click", async () => {
+  const btn = $("dep-build");
+  try {
+    const { v, token, dec, sym, feedId } = depSelection();
+    const amt = $("dep-amt").value.trim();
+    if (!amt || Number(amt) <= 0) return setMsg("err", "Enter an amount first.");
+    const raw = parseUnits(amt, dec);
+
+    await ensureWallet();
+    btn.disabled = true;
+    setMsg("info", `Fetching a fresh Pyth price update…`);
+    const updateData = await fetchPriceUpdateData(feedId);
+
+    const fee = await pub.readContract({ address: ADDR.pyth, abi: PYTH_ABI, functionName: "getUpdateFee", args: [updateData] });
+
+    setMsg("info", `Depositing ${amt} ${sym} into ${v.label} — confirm in your wallet…`);
+    const hash = await wallet.writeContract({
+      account, address: v.address, abi: VAULT_ABI, functionName: "depositWithPriceUpdate",
+      args: [token, raw, updateData], value: fee,
+    });
+    setMsg("info", `Deposit sent: <a href="${explorer("tx", hash)}" target="_blank" rel="noopener">${short(hash)}</a> — waiting…`);
+    await pub.waitForTransactionReceipt({ hash });
+    setMsg("ok", `Deposited ${amt} ${sym} into ${v.label}. Refreshing vault state…`);
+    location.reload();
+  } catch (e) {
+    setMsg("err", e.shortMessage || e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---------- connect ---------- */
+$("connect").addEventListener("click", async () => {
+  try {
+    $("connect").disabled = true;
+    await ensureWallet();
+    $("connect").textContent = short(account);
+    $("netlabel").textContent = "Monad testnet · connected " + short(account);
+    await loadYou();
+    // Kick off (or reuse) the same history scan that feeds vault economics —
+    // it's also what "held vs. in vault" needs, so connecting a wallet is
+    // enough to populate it without a second manual scan.
+    for (const v of resolvedVaults) await scanHistory(v);
+  } catch (e) {
+    setMsg("err", e.shortMessage || e.message);
+    $("connect").textContent = "Connect wallet";
+  } finally { $("connect").disabled = false; }
+});
+function selectedVault() {
+  return resolvedVaults.find((x) => String(x.tier) === $("tier-select")?.value) || resolvedVaults[0];
+}
+$("act-load").addEventListener("click", () => { const v = selectedVault(); if (v) scanHistory(v); });
+$("tier-select")?.addEventListener("change", () => {
+  const v = selectedVault();
+  if (!v) return;
+  loadBandDetail(v);
+  const h = history[v.tier];
+  if (h) { renderEconomics(v); }
+  else {
+    $("econ-body").innerHTML = '<button id="act-load" type="button">Scan vault history</button>';
+    $("act-load").addEventListener("click", () => { const vv = selectedVault(); if (vv) scanHistory(vv); });
+    $("activity-body").innerHTML = '<span class="skeleton" style="font-size:12px">scan above to load</span>';
+  }
+  if (account) updateHoldVsVault(v);
+});
+window.ethereum?.on?.("accountsChanged", () => location.reload());
+window.ethereum?.on?.("chainChanged", () => location.reload());
+
+/* ---------- boot ---------- */
+(async function boot() {
+  if (!ADDR.vaultManager || !ADDR.v3Factory) {
+    $("pending-card").hidden = false;
+    $("netdot").className = "dot off";
+    $("netlabel").textContent = "Monad testnet · contracts not yet deployed";
+    return;
+  }
+  try {
+    for (const t of TIERS) {
+      const address = await pub.readContract({ address: ADDR.vaultManager, abi: VAULT_MANAGER_ABI, functionName: "vaultOfTier", args: [t.tier] });
+      if (address && address.toLowerCase() !== "0x0000000000000000000000000000000000000000") {
+        resolvedVaults.push({ tier: t.tier, label: t.label, address });
+      }
+    }
+    if (!resolvedVaults.length) {
+      $("pending-card").hidden = false;
+      $("netdot").className = "dot off";
+      $("netlabel").textContent = "Monad testnet · no vaults registered yet";
+      return;
+    }
+    // Sequential, not Promise.all across vaults — each card already fires
+    // ~15 parallel reads on its own, and the public RPC starts 429-ing hard
+    // once two vaults' worth of those land at the same instant (confirmed
+    // live once tier 2 existed). One vault's calls finishing before the
+    // next starts keeps peak concurrency the same as it was with one tier.
+    const cards = [];
+    for (const v of resolvedVaults) cards.push(await loadVaultCard(v));
+    $("vaults").innerHTML = cards.join("");
+    if (resolvedVaults.length > 1) {
+      $("tier-select-card").hidden = false;
+      $("tier-select").innerHTML = resolvedVaults.map((v) => `<option value="${v.tier}">${v.label}</option>`).join("");
+    }
+    $("band-card").hidden = false;
+    $("activity-card").hidden = false;
+    if (ADDR.demoFaucet) {
+      $("faucet-card").hidden = false;
+      try {
+        const [amtA, amtB] = await Promise.all([
+          pub.readContract({ address: ADDR.demoFaucet, abi: FAUCET_ABI, functionName: "claimAmountA" }),
+          pub.readContract({ address: ADDR.demoFaucet, abi: FAUCET_ABI, functionName: "claimAmountB" }),
+        ]);
+        $("faucet-amounts").textContent = `${money(fmtWad(amtA))} DMOB + ${money(fmtWad(amtB))} DMOA`;
+      } catch {}
+    }
+    $("deposit-card").hidden = false;
+    $("netdot").className = "dot";
+    $("netlabel").textContent = "Monad testnet · live state loaded";
+    fillDepositForm();
+    loadBandDetail();
+  } catch (e) {
+    $("netdot").className = "dot off";
+    $("netlabel").textContent = "RPC read failed — " + (e.shortMessage || e.message);
+  }
+})();
+</script>
+</body>
+</html>

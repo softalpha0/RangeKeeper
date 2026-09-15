@@ -1,0 +1,18 @@
+{
+  "name": "rangekeeper-solver",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Off-chain monitoring loop for the Adaptive Liquidity Protocol (architecture spec §5).",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test src/*.test.ts",
+    "loop": "node --env-file-if-exists=.env --experimental-strip-types src/loop.ts",
+    "dryrun": "node --env-file-if-exists=.env --experimental-strip-types src/dryrun.ts"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rangekeeper</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#f6f7f5; --paper-raised:#ecefec; --panel:#ffffff;
+    --ink:#141b1a; --ink-soft:#3e4846; --muted:#6b7573; --line:#dadfdc;
+    --accent:#0e7c86; --accent-deep:#0a5960; --accent-soft:rgba(14,124,134,.10);
+    --good:#3e7d4c; --good-soft:rgba(62,125,76,.10);
+    --warn:#9c6b12; --warn-soft:rgba(156,107,18,.11);
+    --risk:#a8451f; --risk-soft:rgba(168,69,31,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0f1514; --paper-raised:#161f1d; --panel:#131b19;
+      --ink:#e8ece9; --ink-soft:#c3cbc8; --muted:#8b9694; --line:#28332f;
+      --accent:#35b0ba; --accent-deep:#7dd4db; --accent-soft:rgba(53,176,186,.13);
+      --good:#6fbf7e; --good-soft:rgba(111,191,126,.13);
+      --warn:#dba53c; --warn-soft:rgba(219,165,60,.14);
+      --risk:#e08a63; --risk-soft:rgba(224,138,99,.14);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f1514; --paper-raised:#161f1d; --panel:#131b19;
+    --ink:#e8ece9; --ink-soft:#c3cbc8; --muted:#8b9694; --line:#28332f;
+    --accent:#35b0ba; --accent-deep:#7dd4db; --accent-soft:rgba(53,176,186,.13);
+    --good:#6fbf7e; --good-soft:rgba(111,191,126,.13);
+    --warn:#dba53c; --warn-soft:rgba(219,165,60,.14);
+    --risk:#e08a63; --risk-soft:rgba(224,138,99,.14);
+  }
+
+  *{ box-sizing:border-box; }
+  body{ background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans", system-ui, sans-serif; font-size:15px; line-height:1.55; }
+  h1,h2,h3{ font-family:"Source Serif 4", Georgia, serif; color:var(--ink); text-wrap:balance; font-weight:700; margin:0; }
+  p{ margin:0; }
+  a{ color:var(--accent-deep); }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  code{ font-family:"IBM Plex Mono", monospace; font-size:.9em; background:var(--paper-raised); border:1px solid var(--line); border-radius:4px; padding:1px 5px; }
+
+  .wrap{ max-width:1080px; margin:0 auto; padding:24px 28px 72px; }
+
+  header.top{ display:flex; align-items:center; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:44px; }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  .brand h1{ font-size:22px; }
+  .brand .tag{ font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .nav{ display:flex; gap:4px; flex-wrap:wrap; }
+  .nav a{ font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted); text-decoration:none; padding:5px 10px; border-radius:6px; }
+  .nav a:hover{ color:var(--ink); background:var(--paper-raised); }
+  .nav a.here{ color:var(--accent-deep); background:var(--accent-soft); }
+
+  /* hero */
+  .hero{ margin-bottom:20px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-deep); margin-bottom:16px; }
+  .hero h2{ font-size:clamp(30px, 5vw, 46px); line-height:1.12; letter-spacing:-.01em; max-width:18ch; }
+  .hero .lede{ font-size:clamp(15px,2.2vw,18px); color:var(--ink-soft); max-width:60ch; margin-top:20px; }
+  .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; }
+  .btn{ font-family:"IBM Plex Mono", monospace; font-size:13px; text-decoration:none; padding:10px 18px; border-radius:8px; border:1px solid var(--line); color:var(--ink); background:var(--panel); display:inline-flex; align-items:center; gap:8px; }
+  .btn:hover{ border-color:var(--accent); color:var(--accent-deep); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  :root[data-theme="dark"] .btn.primary, :root:not([data-theme="light"]) .btn.primary{ color:#08201f; }
+  .btn.primary:hover{ background:var(--accent-deep); color:#fff; }
+
+  .net-strip{ display:flex; align-items:center; gap:10px; font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted); margin-top:28px; }
+  .net-strip .dot{ width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-soft); }
+
+  section{ margin-top:56px; }
+  .sec-label{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  .sec-title{ font-size:24px; letter-spacing:-.01em; max-width:24ch; }
+  .sec-body{ color:var(--ink-soft); max-width:64ch; margin-top:14px; }
+
+  .cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:24px; }
+  .cell{ background:var(--panel); padding:22px 22px; }
+  .cell h3{ font-size:15px; margin-bottom:8px; }
+  .cell p{ font-size:13.5px; color:var(--ink-soft); }
+  .cell .n{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--accent-deep); display:block; margin-bottom:10px; }
+
+  /* mechanism steps */
+  .steps{ margin-top:24px; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .step{ display:grid; grid-template-columns:44px 1fr; gap:16px; padding:20px 22px; background:var(--panel); border-bottom:1px solid var(--line); }
+  .step:last-child{ border-bottom:none; }
+  .step .num{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent-deep); background:var(--accent-soft); border-radius:8px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
+  .step h3{ font-size:15px; margin-bottom:6px; }
+  .step p{ font-size:13.5px; color:var(--ink-soft); max-width:70ch; }
+  .step code{ font-size:11.5px; }
+
+  /* pricing contrast */
+  .contrast{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:24px; }
+  @media (max-width:640px){ .contrast{ grid-template-columns:1fr; } }
+  .contrast > div{ background:var(--panel); padding:22px; }
+  .contrast h3{ font-size:14px; margin-bottom:10px; }
+  .contrast .tag2{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; padding:2px 7px; border-radius:100px; }
+  .contrast .a{ color:var(--muted); background:var(--paper-raised); }
+  .contrast .b{ color:var(--accent-deep); background:var(--accent-soft); }
+  .contrast ul{ margin:12px 0 0; padding-left:18px; }
+  .contrast li{ font-size:13px; color:var(--ink-soft); margin-bottom:7px; }
+
+  /* live proof */
+  .live{ margin-top:24px; border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:24px; }
+  .live h3{ font-size:15px; margin-bottom:4px; }
+  .badge{ display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono", monospace; font-size:10.5px; padding:2px 8px; border-radius:100px; font-weight:500; }
+  .badge::before{ content:""; width:6px; height:6px; border-radius:50%; }
+  .badge.live{ color:var(--good); background:var(--good-soft); } .badge.live::before{ background:var(--good); }
+  .badge.pending{ color:var(--warn); background:var(--warn-soft); } .badge.pending::before{ background:var(--warn); }
+  .kv{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0 28px; margin-top:16px; }
+  .kv .row{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .kv .row .l{ color:var(--muted); } .kv .row .v{ font-family:"IBM Plex Mono", monospace; color:var(--ink); text-align:right; }
+  .kv .row .v a{ color:var(--accent-deep); text-decoration:none; } .kv .row .v a:hover{ text-decoration:underline; }
+
+  footer{ margin-top:64px; padding-top:20px; border-top:1px solid var(--line); }
+  footer p{ font-size:12px; color:var(--muted); max-width:78ch; }
+  footer .links{ display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-family:"IBM Plex Mono", monospace; font-size:12px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand"><h1>Rangekeeper</h1><span class="tag">Adaptive Liquidity</span></div>
+    <nav class="nav">
+      <a href="index.html" class="here" aria-current="page">Overview</a>
+      <a href="app.html">App</a>
+      <a href="status.html">Console</a>
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">Monad · Adaptive Liquidity Protocol</div>
+    <h2>A concentrated position that moves itself before it goes idle.</h2>
+    <p class="lede">
+      Rangekeeper is a vault that is its own Uniswap v3 liquidity provider. It holds one
+      concentrated-liquidity band and <em>recenters it</em> — closes it, reopens it nearer the
+      live price — as the market drifts, instead of sitting still until the band goes
+      one-sided and stops earning fees.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="app.html">Open the app →</a>
+      <a class="btn" href="status.html">Live console</a>
+      <a class="btn" href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">Read the code</a>
+    </div>
+    <div class="net-strip"><span class="dot"></span> Monad testnet · chain 10143 · 73/73 Foundry tests · 24/24 solver tests</div>
+  </div>
+
+  <section>
+    <div class="sec-label">The problem</div>
+    <h2 class="sec-title">A concentrated position at the edge of its range stops working.</h2>
+    <p class="sec-body">
+      Uniswap v3 lets an LP concentrate capital in a tight price band for far higher fee
+      density — until price moves. Near the band edge the position quietly converts to a
+      single asset, stops earning, and the LP eats impermanent loss with no yield to offset
+      it. The usual answers are to widen the range (giving up the efficiency you wanted) or
+      to babysit it manually. Neither scales, and neither helps at 3am.
+    </p>
+  </section>
+
+  <section>
+    <div class="sec-label">How it works</div>
+    <h2 class="sec-title">A solver watches; the vault recenters; the chain checks the math.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div>
+          <h3>The vault opens its own band</h3>
+          <p>A <code>PairVault</code> is the sole liquidity provider for its pair — there is no
+             separate LP whose position it's protecting. It opens one concentrated-liquidity band
+             (the "working pocket") sized from its own depositor capital, under a risk tier whose
+             parameters live in a timelocked <code>ParamsRegistry</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div>
+          <h3>An off-chain solver measures urgency</h3>
+          <p>A keeper loop reads live Pyth prices and realized volatility, then computes how close
+             the band's own edge is relative to volatility — a closed-form z-score against the
+             tier's trigger threshold, no CDF on-chain. When that threshold is crossed it submits a
+             recenter request with a proof.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div>
+          <h3>The chain re-derives the justification</h3>
+          <p><code>VaultManager</code> never trusts the solver's number at face value. It re-checks
+             the trigger from the proof, confirms the band is genuinely near an edge using the
+             pool's own live price, and enforces a per-tier cooldown so a keeper can't thrash
+             the band and burn depositor capital on slippage. A fabricated "urgent" proof for a
+             centered band is rejected on-chain.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div>
+          <h3>Recenter — close, then reopen, atomically</h3>
+          <p>One transaction pushes a fresh Pyth update, closes the old band (returning its
+             principal and fees to the vault), and opens a new one centered on the live price. The
+             vault is never out of the pool for longer than a single block.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">5</div>
+        <div>
+          <h3>A circuit breaker for real volatility</h3>
+          <p>If volatility is above the tier's ceiling when a recenter fires, the vault closes its
+             band and <em>does not</em> reopen — sitting in idle balances until a later call finds
+             calmer conditions. Chasing a genuinely crashing price with fresh liquidity would just
+             burn capital on slippage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">The core idea</div>
+    <h2 class="sec-title">The vault manages its own risk — there's no one else's position to protect.</h2>
+    <div class="contrast">
+      <div>
+        <span class="tag2 a">A statically wide range would</span>
+        <h3>Trade away fee density permanently</h3>
+        <ul>
+          <li>Price rarely gets close to either edge, but capital earns far less per dollar the
+              whole time it sits there — the cost is paid every block, not just near the edge.</li>
+          <li>Widening never adapts: the range that was safe in a calm month is still the range
+              during a volatile one.</li>
+          <li>Someone still has to notice when it's finally worth widening further, or narrowing back.</li>
+        </ul>
+      </div>
+      <div>
+        <span class="tag2 b">Rangekeeper does</span>
+        <h3>Keep the band tight, and move it</h3>
+        <ul>
+          <li>The band stays as concentrated as the tier allows, and only moves when the on-chain
+              math says it's genuinely time to — not on a fixed schedule.</li>
+          <li>Every recenter is independently re-justified on-chain from the same trigger and
+              sanity checks, so a keeper can propose but never dictate.</li>
+          <li>A real circuit breaker sits out a crash instead of recentering straight into it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Architecture</div>
+    <h2 class="sec-title">Three contracts, one solver.</h2>
+    <div class="cols">
+      <div class="cell"><span class="n">contract</span><h3>PairVault</h3><p>Isolated per-pair pool of depositor capital, and the sole Uniswap v3 LP for its pair — one fixed pool, set at deployment. NAV-priced shares via Pyth, not 1:1. Opens and closes its own band.</p></div>
+      <div class="cell"><span class="n">contract</span><h3>VaultManager</h3><p>The keeper entry point for recentering a vault's band. Re-derives every recenter's trigger, sanity check, and cooldown from RiskMath — reading the pool's own live price directly, never trusting a keeper's proof.</p></div>
+      <div class="cell"><span class="n">contract</span><h3>ParamsRegistry</h3><p>Per-tier risk parameters behind a 2-day timelock. Queue with <code>setTierParams</code>, activate with <code>execute</code>.</p></div>
+      <div class="cell"><span class="n">off-chain</span><h3>Solver loop</h3><p>TypeScript keeper: reads each tier's vault directly (one view call, no log-scanning indexer), computes the trigger, submits the staleness-safe recenter.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Status</div>
+    <h2 class="sec-title">Built, tested, and live on Monad testnet.</h2>
+    <div class="live">
+      <h3>Contract layer <span class="badge live" style="margin-left:6px">complete</span></h3>
+      <div class="kv">
+        <div>
+          <div class="row"><span class="l">Foundry tests</span><span class="v">73 / 73 passing</span></div>
+          <div class="row"><span class="l">Solver tests</span><span class="v">24 / 24 passing</span></div>
+        </div>
+        <div>
+          <div class="row"><span class="l">Covers</span><span class="v">NAV-neutral open/close, sanity gate, cooldown, real circuit-breaker pause + resume</span></div>
+          <div class="row"><span class="l">Verified against</span><span class="v">a real deployed Uniswap v3 factory and pool, not mocks</span></div>
+        </div>
+      </div>
+      <h3 style="margin-top:24px;">Testnet deployment <span class="badge live" style="margin-left:6px">live</span></h3>
+      <div class="kv">
+        <div>
+          <div class="row"><span class="l">VaultManager</span><span class="v"><a href="https://testnet.monadscan.com/address/0x28AC946761572E3b4FeA03163Dc894997b9677FE" target="_blank" rel="noopener">0x28AC…9677FE</a></span></div>
+          <div class="row"><span class="l">Uniswap v3 factory</span><span class="v"><a href="https://testnet.monadscan.com/address/0x7Dc4f0eC255F10AB04D46E118Aa4cD2bBCE375B9" target="_blank" rel="noopener">0x7Dc4…E375B9</a></span></div>
+        </div>
+        <div>
+          <div class="row"><span class="l">Tier 1 vault</span><span class="v"><a href="https://testnet.monadscan.com/address/0xD534BdcC0E5a4E703A43Be055c5EFFD938114528" target="_blank" rel="noopener">0xD534…114528</a></span></div>
+          <div class="row"><span class="l">Band open</span><span class="v">ticks [-600, 600]</span></div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-top:12px;">
+        See the <a href="app.html">app</a> for live vault state, or the README for every address.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Rangekeeper is an adaptive liquidity protocol for Monad. AUSD here is a separate stablecoin,
+      not affiliated with Aurora. Explorer links go to MonadScan.
+    </p>
+    <div class="links">
+      <a href="app.html">App</a>
+      <a href="status.html">Console</a>
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

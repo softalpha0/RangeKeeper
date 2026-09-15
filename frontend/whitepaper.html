@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rangekeeper Whitepaper</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+  :root{
+    --paper:#f6f7f5; --paper-raised:#ecefec; --panel:#ffffff;
+    --ink:#141b1a; --ink-soft:#3e4846; --muted:#6b7573; --line:#dadfdc;
+    --accent:#0e7c86; --accent-deep:#0a5960; --accent-soft:rgba(14,124,134,.10);
+    --good:#3e7d4c; --good-soft:rgba(62,125,76,.10);
+    --warn:#9c6b12; --warn-soft:rgba(156,107,18,.11);
+    --risk:#a8451f; --risk-soft:rgba(168,69,31,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0f1514; --paper-raised:#161f1d; --panel:#131b19;
+      --ink:#e8ece9; --ink-soft:#c3cbc8; --muted:#8b9694; --line:#28332f;
+      --accent:#35b0ba; --accent-deep:#7dd4db; --accent-soft:rgba(53,176,186,.13);
+      --good:#6fbf7e; --good-soft:rgba(111,191,126,.13);
+      --warn:#dba53c; --warn-soft:rgba(219,165,60,.14);
+      --risk:#e08a63; --risk-soft:rgba(224,138,99,.14);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f1514; --paper-raised:#161f1d; --panel:#131b19;
+    --ink:#e8ece9; --ink-soft:#c3cbc8; --muted:#8b9694; --line:#28332f;
+    --accent:#35b0ba; --accent-deep:#7dd4db; --accent-soft:rgba(53,176,186,.13);
+    --good:#6fbf7e; --good-soft:rgba(111,191,126,.13);
+    --warn:#dba53c; --warn-soft:rgba(219,165,60,.14);
+    --risk:#e08a63; --risk-soft:rgba(224,138,99,.14);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans", system-ui, sans-serif; font-size:15px; line-height:1.55; }
+  h1,h2,h3{ font-family:"Source Serif 4", Georgia, serif; color:var(--ink); text-wrap:balance; font-weight:700; margin:0; }
+  p{ margin:0; }
+  a{ color:var(--accent-deep); }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  code{ font-family:"IBM Plex Mono", monospace; font-size:.88em; background:var(--paper-raised); border:1px solid var(--line); border-radius:4px; padding:1px 5px; word-break:break-word; }
+
+  .wrap{ max-width:900px; margin:0 auto; padding:24px 28px 72px; }
+
+  header.top{ display:flex; align-items:center; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:36px; }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  .brand h1{ font-size:22px; }
+  .brand .tag{ font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .nav{ display:flex; gap:4px; flex-wrap:wrap; }
+  .nav a{ font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted); text-decoration:none; padding:5px 10px; border-radius:6px; }
+  .nav a:hover{ color:var(--ink); background:var(--paper-raised); }
+  .nav a.here{ color:var(--accent-deep); background:var(--accent-soft); }
+
+  /* notice */
+  .wp-notice{ font-size:12px; color:var(--muted); border:1px dashed var(--line); border-radius:8px; padding:12px 16px; margin-bottom:24px; }
+
+  /* hero — deliberately a fixed dark "cover" regardless of site theme */
+  .wp-hero{ background:#141b1a; color:#eef1ef; border-radius:12px; padding:clamp(24px,5vw,44px); margin-bottom:40px; }
+  .wp-kicker{ font-family:"IBM Plex Mono", monospace; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:rgba(238,241,239,.5); margin-bottom:16px; }
+  .wp-hero h1{ font-size:clamp(30px,5.2vw,48px); line-height:1.14; letter-spacing:-.01em; color:#f8f7f4; max-width:20ch; }
+  .wp-hero h1 mark{ background:rgba(53,176,186,.3); color:#eafcfb; padding:0 6px; border-radius:3px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+  .wp-lede{ font-size:clamp(15px,2.1vw,17.5px); color:rgba(238,241,239,.72); max-width:60ch; margin-top:20px; }
+  .wp-statement{ font-family:"Source Serif 4", serif; font-style:italic; font-size:16px; color:rgba(238,241,239,.85); margin-top:14px; }
+  .wp-status{ display:flex; align-items:center; gap:10px; font-family:"IBM Plex Mono", monospace; font-size:12px; color:rgba(238,241,239,.55); margin-top:26px; flex-wrap:wrap; }
+  .wp-status .dot{ width:7px; height:7px; border-radius:50%; background:#5fd08a; box-shadow:0 0 0 3px rgba(95,208,138,.2); flex-shrink:0; }
+
+  /* contents */
+  .wp-toc{ border:1px solid var(--line); border-radius:8px; padding:18px 22px; margin-bottom:56px; background:var(--panel); }
+  .wp-toc .wp-toc-head{ font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .wp-toc ol{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:2px 24px; }
+  @media (max-width:560px){ .wp-toc ol{ grid-template-columns:1fr; } }
+  .wp-toc li{ font-size:13.5px; }
+  .wp-toc a{ display:flex; gap:10px; text-decoration:none; color:var(--ink-soft); padding:6px 4px; border-radius:6px; }
+  .wp-toc a:hover{ color:var(--accent-deep); background:var(--accent-soft); }
+  .wp-toc a .n{ font-family:"IBM Plex Mono", monospace; color:var(--muted); flex-shrink:0; }
+
+  /* sections */
+  .wp-sec{ margin-top:60px; scroll-margin-top:20px; }
+  .wp-sec-num{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.08em; color:var(--muted); margin-bottom:10px; }
+  .wp-sec h2{ font-size:clamp(24px,3.6vw,32px); letter-spacing:-.01em; max-width:26ch; }
+  .wp-sec > p, .wp-sec > .wp-body p{ color:var(--ink-soft); max-width:68ch; margin-top:16px; font-size:15.5px; }
+  .wp-sec > p + p, .wp-body p + p{ margin-top:14px; }
+  .wp-sec strong{ color:var(--ink); }
+  .wp-body ul{ margin:14px 0 0; padding-left:20px; max-width:66ch; }
+  .wp-body li{ color:var(--ink-soft); font-size:15px; margin-bottom:10px; }
+  .wp-body li b, .wp-body p b{ color:var(--ink); }
+
+  /* entity / comparison tables */
+  .etable{ width:100%; border-collapse:collapse; margin-top:22px; font-size:14px; }
+  .etable th{ text-align:left; font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:500; padding:0 14px 10px 0; border-bottom:1px solid var(--line); }
+  .etable td{ padding:14px 14px 14px 0; border-bottom:1px dashed var(--line); vertical-align:top; color:var(--ink-soft); }
+  .etable tr:last-child td{ border-bottom:none; }
+  .etable td:first-child{ font-weight:600; color:var(--ink); white-space:nowrap; }
+  .etable-wrap{ overflow-x:auto; }
+
+  /* param table */
+  .ptable{ width:100%; border-collapse:collapse; margin-top:18px; font-size:13.5px; }
+  .ptable th{ text-align:left; font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:500; padding:8px 14px; background:var(--paper-raised); }
+  .ptable td{ padding:9px 14px; border-bottom:1px solid var(--line); }
+  .ptable td.mono, .ptable td:last-child{ font-family:"IBM Plex Mono", monospace; color:var(--ink); }
+
+  /* big stats */
+  .statrow{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:22px; }
+  .stat{ background:var(--panel); padding:20px 18px; }
+  .stat .num{ font-family:"Source Serif 4", serif; font-size:30px; font-weight:700; color:var(--accent-deep); line-height:1; }
+  .stat .label{ font-size:11.5px; color:var(--muted); margin-top:8px; }
+
+  /* equation callouts */
+  .eqbox{ background:var(--paper-raised); border:1px solid var(--line); border-radius:8px; padding:18px 22px; margin:20px 0; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .eqbox .eq{ overflow-x:auto; }
+  .eqbox .eqnum{ font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted); white-space:nowrap; }
+  .eqnote{ font-size:13px; color:var(--muted); margin-top:10px; }
+
+  /* case study / callout note */
+  .note{ border-left:3px solid var(--warn); background:var(--warn-soft); border-radius:0 8px 8px 0; padding:16px 20px; margin-top:20px; }
+  .note p{ font-size:14px; color:var(--ink-soft); }
+  .note .note-label{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--warn); margin-bottom:8px; }
+
+  /* flow diagram */
+  .flow{ margin-top:28px; display:flex; flex-direction:column; align-items:center; gap:0; }
+  .fbox{ width:100%; max-width:420px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--panel); }
+  .fbox .fhead{ background:var(--ink); color:var(--paper); font-family:"IBM Plex Mono", monospace; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; text-align:center; padding:9px; }
+  .fbox .fbody{ padding:12px 16px; font-size:12.5px; color:var(--ink-soft); text-align:center; }
+  .fbox.plain{ padding:12px 16px; text-align:center; font-family:"IBM Plex Mono", monospace; font-size:12.5px; font-weight:600; color:var(--ink); }
+  .farrow{ display:flex; flex-direction:column; align-items:center; padding:8px 0; }
+  .farrow .flabel{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.03em; color:var(--muted); text-align:center; max-width:280px; margin:2px 0; }
+  .farrow .fglyph{ color:var(--muted); font-size:16px; line-height:1; }
+  .fside{ display:flex; align-items:center; justify-content:center; gap:18px; width:100%; max-width:640px; margin:6px 0; flex-wrap:wrap; }
+  .fside .fbox{ max-width:220px; flex:1 1 200px; }
+  .fdiamond-wrap{ display:flex; justify-content:center; margin:2px 0; }
+  .fdiamond{ width:172px; height:172px; background:var(--accent-soft); border:2px solid var(--accent); border-radius:16px; transform:rotate(45deg); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .fdiamond .inner{ transform:rotate(-45deg); text-align:center; padding:14px; }
+  .fdiamond .inner b{ display:block; font-family:"IBM Plex Mono", monospace; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink); }
+  .fdiamond .inner span{ font-size:11px; color:var(--ink-soft); display:block; margin-top:8px; line-height:1.35; }
+  .fsplit{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:10px; width:100%; }
+  .fsplit .fbox{ max-width:180px; flex:1 1 150px; }
+  .flegend{ font-size:12px; color:var(--muted); margin-top:18px; text-align:center; max-width:60ch; }
+
+  footer{ margin-top:72px; padding-top:20px; border-top:1px solid var(--line); }
+  footer p{ font-size:12px; color:var(--muted); max-width:78ch; }
+  footer .links{ display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-family:"IBM Plex Mono", monospace; font-size:12px; }
+
+  .katex{ font-size:1.05em; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand"><h1>Rangekeeper</h1><span class="tag">Whitepaper</span></div>
+    <nav class="nav">
+      <a href="index.html">Overview</a>
+      <a href="app.html">App</a>
+      <a href="status.html">Console</a>
+      <a href="whitepaper.html" class="here" aria-current="page">Whitepaper</a>
+      <a href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="wp-notice">
+    This document describes the mechanism actually implemented by the contracts deployed at the
+    addresses in §10 — it is not a specification independent of that code. It summarizes two internal
+    design documents (a math spec and an architecture spec, kept unpublished); equation numbers below
+    match the ones in <code>RiskMath.sol</code>'s and <code>PairVault.sol</code>'s own comments, so
+    paper and code can't quietly drift apart. The only canonical implementation is the deployment on
+    Monad testnet linked throughout.
+  </div>
+
+  <div class="wp-hero">
+    <div class="wp-kicker">Whitepaper · v1</div>
+    <h1>The concentrated position that <mark>recenters itself</mark>.</h1>
+    <p class="wp-lede">
+      Rangekeeper is a Uniswap v3 vault that is its own sole liquidity provider. It opens one
+      concentrated-liquidity band and closes-then-reopens it nearer the live price as the market
+      drifts — gated entirely by on-chain re-validation, not a keeper's word.
+    </p>
+    <p class="wp-statement">No proof is trusted. Only recomputed.</p>
+    <div class="wp-status"><span class="dot"></span> Monad testnet · chain 10143 · 73/73 Foundry tests · 24/24 solver tests · 2 live tiers</div>
+  </div>
+
+  <nav class="wp-toc" aria-label="Contents">
+    <div class="wp-toc-head">Contents</div>
+    <ol>
+      <li><a href="#sec-01"><span class="n mono">01</span> Introduction</a></li>
+      <li><a href="#sec-02"><span class="n mono">02</span> The actors and how they relate</a></li>
+      <li><a href="#sec-03"><span class="n mono">03</span> Recentering, step by step</a></li>
+      <li><a href="#sec-04"><span class="n mono">04</span> The trigger: urgency without a CDF</a></li>
+      <li><a href="#sec-05"><span class="n mono">05</span> The sanity check and the circuit breaker</a></li>
+      <li><a href="#sec-06"><span class="n mono">06</span> Fees: harvested, split, real</a></li>
+      <li><a href="#sec-07"><span class="n mono">07</span> Share pricing and the spare pocket</a></li>
+      <li><a href="#sec-08"><span class="n mono">08</span> The risk framework beyond v1</a></li>
+      <li><a href="#sec-09"><span class="n mono">09</span> Two tiers, live today</a></li>
+      <li><a href="#sec-10"><span class="n mono">10</span> Deployment and status</a></li>
+    </ol>
+  </nav>
+
+  <section class="wp-sec" id="sec-01">
+    <div class="wp-sec-num">01</div>
+    <h2>Introduction</h2>
+    <div class="wp-body">
+      <p>
+        Rangekeeper is not a strategy that sits beside a Uniswap v3 position — it <em>is</em> the
+        position. A <code>PairVault</code> is the sole liquidity provider for its pair: one
+        concentrated-liquidity band, sized entirely from real depositor capital, managed on-chain from
+        open to close. There is no separate LP whose exposure it's hedging, and no off-chain custody of
+        funds at any point.
+      </p>
+      <p>
+        Concentrated liquidity earns far higher fee density than a full-range position — at a cost.
+        Once price drifts near either edge of the band, the position quietly converts to a single
+        asset, stops earning, and starts eating impermanent loss with nothing left to offset it. The
+        two usual fixes are to widen the range, giving up the efficiency concentration bought in the
+        first place, or to babysit it by hand, which doesn't scale past one position and one attentive
+        human.
+      </p>
+      <p>
+        Rangekeeper's answer is a vault that recenters its own band. An off-chain solver watches
+        urgency and proposes <em>when</em>, but every recenter re-derives its own justification from
+        on-chain state before it is allowed to move a cent of depositor capital — the trigger, a sanity
+        check against the pool's real cached price, and a per-tier cooldown. A keeper can propose;
+        it can never dictate.
+      </p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-02">
+    <div class="wp-sec-num">02</div>
+    <h2>The actors and how they relate</h2>
+    <div class="wp-body">
+      <p>Five things make up the system. Everything below is a relationship between them.</p>
+      <div class="etable-wrap">
+        <table class="etable">
+          <thead><tr><th>Actor</th><th>What it is</th><th>TL;DR</th></tr></thead>
+          <tbody>
+            <tr><td>PairVault</td><td>Isolated per-pair vault; the sole Uniswap v3 LP for its pair, against one fixed pool</td><td>Holds depositor capital, opens/closes its own band, prices shares off a live dual-asset NAV.</td></tr>
+            <tr><td>VaultManager</td><td>Registry of tier → vault; the sole keeper entry point</td><td>Never trusts a keeper's numbers — re-derives the trigger, sanity check, and cooldown on-chain, reading the pool's own live price directly.</td></tr>
+            <tr><td>ParamsRegistry</td><td>Timelocked, versioned per-tier risk parameters</td><td><code>zStar</code>, <code>sigmaMax</code>, <code>rSanityLow/High</code>; every change sits behind a 2-day timelock.</td></tr>
+            <tr><td>Keeper / solver</td><td>Off-chain TypeScript monitoring loop</td><td>Reads live Pyth prices and realized volatility, computes the same trigger locally, submits a proof when it crosses.</td></tr>
+            <tr><td>Depositors</td><td>Anyone</td><td>Deposit an asset for NAV-priced shares; withdraw a proportional claim on the vault's balances.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:28px">The flows between them:</p>
+      <ul>
+        <li><b>Traders ⇄ pool.</b> Anyone can swap, no vault interaction needed. Every swap moves the pool's own price, readable at any time via its public <code>slot0()</code>.</li>
+        <li><b>Pool → VaultManager.</b> At the moment a recenter is proposed, <code>VaultManager</code> reads the pool's live <code>slot0()</code> directly. That live price is what the sanity check is measured against — not whatever a keeper's proof claims.</li>
+        <li><b>Keeper → VaultManager.</b> The solver submits a recenter request carrying <code>d_min</code>/<code>σ</code> for its tier. <code>VaultManager</code> re-derives the trigger from these numbers itself; it never reads a boolean "should recenter" from off-chain.</li>
+        <li><b>ParamsRegistry → VaultManager.</b> Every tier's risk thresholds — read fresh on every recenter, changeable only through a 2-day timelock.</li>
+        <li><b>VaultManager → PairVault.</b> Once (and only once) both gates clear, <code>VaultManager.recenter</code> calls <code>closeBand()</code> then <code>openBand()</code> on the vault, atomically, in one transaction.</li>
+        <li><b>Depositors ⇄ PairVault.</b> Deposit an asset for NAV-priced shares (optionally pushing a fresh Pyth update in the same transaction); withdraw a proportional claim on idle balances.</li>
+      </ul>
+
+      <div class="flow">
+        <div class="fbox plain">TRADERS</div>
+        <div class="farrow"><span class="flabel">swap token ⇄ token</span><span class="fglyph">↕</span></div>
+        <div class="fbox">
+          <div class="fhead">The pool</div>
+          <div class="fbody">The vault's own, fixed Uniswap v3 pool. Its live price is always readable via <code>slot0()</code>.</div>
+        </div>
+        <div class="farrow"><span class="flabel">read live at recenter time — slot0()</span><span class="fglyph">↓</span></div>
+
+        <div class="fside">
+          <div class="fbox">
+            <div class="fhead">ParamsRegistry</div>
+            <div class="fbody">tier params, 2-day timelock</div>
+          </div>
+        </div>
+        <div class="farrow"><span class="fglyph">↓</span></div>
+        <div class="fdiamond-wrap">
+          <div class="fdiamond"><div class="inner"><b>VaultManager</b><span>re-derives trigger, sanity check, cooldown — trusts nothing</span></div></div>
+        </div>
+        <div class="farrow"><span class="fglyph">↑</span></div>
+        <div class="fside">
+          <div class="fbox">
+            <div class="fhead">Keeper / solver</div>
+            <div class="fbody">recenter proof: d_min, σ</div>
+          </div>
+        </div>
+
+        <div class="farrow"><span class="flabel">recenter() — only once both gates clear</span><span class="fglyph">↓</span></div>
+        <div class="fbox">
+          <div class="fhead">The vault — PairVault</div>
+          <div class="fbody">Sole LP for its pair. <code>closeBand()</code> → <code>openBand()</code> against the pool above, atomically.</div>
+        </div>
+        <div class="fsplit">
+          <div class="farrow" style="padding:8px 0"><span class="flabel">deposit / withdraw</span><span class="fglyph">↕</span></div>
+          <div class="farrow" style="padding:8px 0"><span class="flabel">collectFees() — permissionless</span><span class="fglyph">↘</span></div>
+        </div>
+        <div class="fsplit">
+          <div class="fbox plain">DEPOSITORS</div>
+          <div class="fbox plain">FEE SPLIT<br>80 / 15 / 5</div>
+        </div>
+      </div>
+      <p class="flegend">Every path either returns value to depositors or is rejected on-chain. No path depends on a keeper being honest — only on it being right, and the chain checks that too.</p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-03">
+    <div class="wp-sec-num">03</div>
+    <h2>Recentering, step by step</h2>
+    <div class="wp-body">
+      <ul>
+        <li><b>1. The vault opens its own band.</b> Sized from its own depositor capital, under a risk tier whose parameters live in the timelocked <code>ParamsRegistry</code>. The very first band opens unconditionally — there is no "edge" to be near yet.</li>
+        <li><b>2. An off-chain solver measures urgency.</b> The loop reads live Pyth prices and realized volatility, computes the closed-form trigger locally (§04), and submits a recenter request with a proof once the tier's threshold is crossed.</li>
+        <li><b>3. The chain re-derives the justification.</b> <code>VaultManager</code> recomputes the trigger from the proof, confirms the band is genuinely near an edge using the pool's own live price (§05), and enforces a per-tier cooldown. A fabricated "urgent" proof for a centered band reverts.</li>
+        <li><b>4. Recenter — close, then reopen, atomically.</b> One transaction pushes a fresh Pyth update, closes the old band (principal and fees return to the vault), and opens a new one centered on the live price. The vault is never out of the pool for longer than a single block, and the move is NAV-neutral by construction.</li>
+        <li><b>5. A circuit breaker for real volatility.</b> If realized volatility is above the tier's ceiling, the band closes and does <em>not</em> reopen — capital sits in idle balances until a later call finds calmer conditions (§05).</li>
+      </ul>
+
+      <div class="statrow">
+        <div class="stat"><div class="num mono">5 min</div><div class="label">per-tier recenter cooldown</div></div>
+        <div class="stat"><div class="num mono">2 days</div><div class="label">ParamsRegistry timelock</div></div>
+        <div class="stat"><div class="num mono">60s</div><div class="label">Pyth price staleness bound</div></div>
+        <div class="stat"><div class="num mono">1 block</div><div class="label">max time out of the pool during a recenter</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-04">
+    <div class="wp-sec-num">04</div>
+    <h2>The trigger: urgency without a CDF</h2>
+    <div class="wp-body">
+      <p>
+        Position-in-range measures where the live price sits between the band's own bounds, in
+        sqrt-price terms (0 at the lower bound, 1 at the upper):
+      </p>
+      <div class="eqbox">
+        <div class="eq">\( r \;=\; \dfrac{\sqrt{P} - \sqrt{P_a}}{\sqrt{P_b} - \sqrt{P_a}} \)</div>
+        <div class="eqnum">eq. 1 — <code>RiskMath.positionInRange</code></div>
+      </div>
+      <p>
+        The log-distance to the nearer edge, and urgency itself, follow directly:
+      </p>
+      <div class="eqbox">
+        <div class="eq">\( d_{\min} = \min\!\big(\ln(P/P_a),\; \ln(P_b/P)\big) \qquad U = 2\,\Phi\!\left(-\dfrac{d_{\min}}{\sigma\sqrt{T}}\right) \)</div>
+        <div class="eqnum">eq. 2</div>
+      </div>
+      <p>
+        A recenter fires once urgency <code>U</code> crosses the tier's probability threshold
+        <code>θ*</code>. <code>U</code> is monotonically decreasing in <code>d_min / (σ√T)</code>, so
+        rather than evaluate a normal CDF (Φ) on-chain — real gas cost, real approximation error —
+        <code>θ*</code> is converted off-chain, once per tier, into an equivalent z-score:
+      </p>
+      <div class="eqbox">
+        <div class="eq">\( z^{*} = \Phi^{-1}\!\left(1 - \dfrac{\theta^{*}}{2}\right) \qquad \text{triggered} \iff \dfrac{d_{\min}}{\sigma\sqrt{T}} \le z^{*} \)</div>
+        <div class="eqnum">eq. 2 (contract form)</div>
+      </div>
+      <p class="eqnote">
+        <code>RiskMath.isTriggered</code> only ever compares two already-scaled WAD numbers — zero CDF
+        approximation risk, zero extra gas. Tier 1's queued parameters: <code>zStar ≈ 0.67449</code>
+        (θ* = 0.50), <code>sigmaMax = 0.08</code>, over a 3-day monitoring window.
+      </p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-05">
+    <div class="wp-sec-num">05</div>
+    <h2>The sanity check and the circuit breaker</h2>
+    <div class="wp-body">
+      <p>
+        A keeper's proof carries <code>d_min</code> and <code>σ</code> computed off-chain — numbers the
+        chain can't independently recompute cheaply. So <code>VaultManager</code> cross-checks the
+        proof against something it <em>can</em> verify cheaply: the pool's own live price, read directly
+        via <code>slot0()</code> and run back through <code>positionInRange</code>, then tested against
+        the tier's edge band directly, with no logarithm needed on-chain at all:
+      </p>
+      <div class="eqbox">
+        <div class="eq">\( \text{withinEdgeBand}(r) \;=\; r \le r_{\text{low}} \;\;\lor\;\; r \ge r_{\text{high}} \)</div>
+        <div class="eqnum"><code>RiskMath.withinEdgeBand</code></div>
+      </div>
+      <p>
+        A recenter needs <em>both</em> gates: the proof's own trigger, and the chain's independent
+        confirmation that the band is genuinely near an edge right now. A keeper can no longer fabricate
+        an urgent-looking proof for a band the chain can see sitting comfortably centered —
+        <code>test/VaultManager.t.sol</code> exercises exactly this rejection.
+      </p>
+      <p>
+        Above the tier's volatility ceiling (<code>sigmaMax</code>), a recenter still closes the band —
+        but does not reopen it. Without care, that closed state could reopen unconditionally on the very
+        next call regardless of whether conditions had actually calmed. <code>VaultManager.paused[tier]</code>
+        avoids that by distinguishing two states that would otherwise look identical on-chain:
+      </p>
+      <div class="etable-wrap">
+        <table class="etable">
+          <thead><tr><th>State</th><th>Meaning</th><th>Next recenter</th></tr></thead>
+          <tbody>
+            <tr><td>Never opened</td><td>No band has ever existed for this tier</td><td>Opens unconditionally — nothing to be "near the edge" of yet</td></tr>
+            <tr><td>Paused</td><td>Closed because volatility exceeded the ceiling</td><td>Requires a later call to find calm conditions before it resumes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="eqnote">Regression guard: <code>test_recenter_pausesOnHighVolatility_thenRequiresCalmToResume</code>.</p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-06">
+    <div class="wp-sec-num">06</div>
+    <h2>Fees: harvested, split, real</h2>
+    <div class="wp-body">
+      <p>
+        <code>PairVault.collectFees()</code> is a permissionless harvest: it calls the pool's own
+        <code>burn(tickLower, tickUpper, 0)</code> — the standard zero-liquidity "poke" that moves
+        accrued fees into the position's owed-tokens balance without freeing any principal — then
+        <code>collect()</code>s the result into the vault's idle balances. <code>test/PairVaultFees.t.sol</code>
+        verifies this against real fees from a real swap — not a mock, not a zero-fee no-op.
+      </p>
+      <p>Every harvest splits three ways:</p>
+      <div class="statrow">
+        <div class="stat"><div class="num mono">80%</div><div class="label">to depositors, via NAV</div></div>
+        <div class="stat"><div class="num mono">15%</div><div class="label">to the protocol treasury</div></div>
+        <div class="stat"><div class="num mono">5%</div><div class="label">to whoever calls <code>collectFees</code></div></div>
+      </div>
+      <p style="margin-top:18px">
+        The keeper rebate exists so the party actually paying gas to harvest fees is compensated for it;
+        the remainder seeds protocol-owned liquidity later. This split applies only to a standalone
+        <code>collectFees()</code> harvest — not to the principal-plus-fees a recenter's <code>closeBand()</code>
+        returns, which would need per-position fee-growth snapshotting this version doesn't do. Flagged,
+        not silently approximated.
+      </p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-07">
+    <div class="wp-sec-num">07</div>
+    <h2>Share pricing and the spare pocket</h2>
+    <div class="wp-body">
+      <p>
+        Deposits are priced against a real dual-asset NAV via Pyth, not credited 1:1. A deposit of
+        <code>amountRaw</code> mints shares proportional to its Pyth-priced value:
+      </p>
+      <div class="eqbox">
+        <div class="eq">\( \text{value} = \dfrac{\text{amountRaw} \times \text{priceWad}}{10^{\text{decimals}}} \qquad \text{shares} = \text{totalShares} \times \dfrac{\text{value}}{\text{NAV}} \)</div>
+        <div class="eqnum"><code>PairVault._valueWad</code></div>
+      </div>
+      <p>
+        <code>navWad()</code> sums three things per side, each Pyth-priced: idle balance (the "spare
+        pocket"), whatever's swept to a yield source, and the live value of any currently-open band —
+        via <code>LiquidityMath.getAmountsForLiquidity</code> against the pool's real current price. Most
+        of a vault's value is expected to sit in its own band by design, so NAV has to price that band
+        live rather than only the idle balances sitting alongside it. <code>test_openBand_doesNotChangeNav</code>
+        is the regression guard that a recenter itself never silently moves NAV.
+      </p>
+      <p>
+        <code>depositWithPriceUpdate(asset, amount, priceUpdateData)</code> pushes a fresh Pyth update and
+        prices the deposit atomically in the same transaction — the correct pattern for a pull oracle,
+        since two separate transactions can't reliably land inside the 60-second staleness window once
+        real block time and signing latency are counted. A side with zero balance is never priced at
+        all, so a single-sided deposit into an empty vault never depends on the <em>other</em> asset's
+        feed being fresh.
+      </p>
+      <p>
+        <code>sweepIdleToYield()</code> / <code>sweepYieldToIdle()</code> move up to 80% of idle balance
+        (<code>SWEEP_BPS</code>) to and from a pluggable <code>IYieldSource</code> — a real
+        Aave-V3-shaped adapter exists and is tested, including proportional interest accrual between
+        depositors. It is unset (<code>address(0)</code>) on the live deployment today: Aave V3 is
+        Monad-mainnet-only, and the one lending market that existed on Monad testnet has been retired by
+        its own team. <code>withdraw()</code> auto-pulls from the yield source if local balance is
+        short, so a depositor's claim is never stranded there.
+      </p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-08">
+    <div class="wp-sec-num">08</div>
+    <h2>The risk framework beyond v1</h2>
+    <div class="wp-body">
+      <p>
+        The math spec behind Rangekeeper covers more ground than <code>VaultManager</code> v1 actually
+        reads on-chain. The following are implemented as tested, pure functions in
+        <code>RiskMath.sol</code> today — verified in isolation, but not yet wired into the recenter
+        gate. That's a deliberate v1 simplification, flagged here rather than left to be discovered:
+        capped-injection sizing (<code>kMax</code>), a cumulative loss-coverage circuit breaker
+        (<code>lcrMin</code>), and a trend-based stop (<code>mStar</code>) all remain declared fields on
+        <code>ParamsRegistry.TierParams</code> that v1 does not read.
+      </p>
+      <p>Concentration amplifies impermanent loss by a closed-form factor:</p>
+      <div class="eqbox">
+        <div class="eq">\( \gamma = \dfrac{1}{1 - \sqrt{P_a/P_b}} = \dfrac{\sqrt{P_b}}{\sqrt{P_b}-\sqrt{P_a}} \)</div>
+        <div class="eqnum">eq. 5</div>
+      </div>
+      <div class="eqbox">
+        <div class="eq">\( IL_{\text{full}}(\rho) = \dfrac{2\sqrt{\rho}}{1+\rho} - 1 \qquad IL_{\text{conc}} = \gamma \cdot IL_{\text{full}}(\rho) \)</div>
+        <div class="eqnum">eq. 6</div>
+      </div>
+      <p>where <code>ρ</code> is the current-to-entry price ratio. A tranche's loss-coverage ratio nets accrued fee yield against that loss:</p>
+      <div class="eqbox">
+        <div class="eq">\( LCR = 1 + f_t - |IL_{\text{conc}}| \)</div>
+        <div class="eqnum">eq. 7</div>
+      </div>
+      <p>and the price ratios at which a tranche would breach a given <code>LCR_min</code> follow in closed form, with no iteration needed on-chain:</p>
+      <div class="eqbox">
+        <div class="eq">\( A = 1 - \dfrac{c}{\gamma} \qquad \rho_{\uparrow} = \left(\dfrac{1+\sqrt{1-A^2}}{A}\right)^{2} \qquad \rho_{\downarrow} = \left(\dfrac{1-\sqrt{1-A^2}}{A}\right)^{2} \)</div>
+        <div class="eqnum">eq. 8</div>
+      </div>
+      <p>
+        And when a band ever holds both protocol-owned and user liquidity side by side, fee income
+        splits by contributed share, not evenly:
+      </p>
+      <div class="eqbox">
+        <div class="eq">\( \text{protocolShare} = \text{totalFees} \times \dfrac{L_{\text{protocol}}}{L_{\text{protocol}} + L_{\text{user}}} \)</div>
+        <div class="eqnum">eq. 10 — <code>RiskMath.feeSplit</code></div>
+      </div>
+      <p class="eqnote">
+        All five functions are unit-tested against known values today. Wiring any of them into the live
+        recenter gate is future work, not a promise made by this document.
+      </p>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-09">
+    <div class="wp-sec-num">09</div>
+    <h2>Two tiers, live today</h2>
+    <div class="wp-body">
+      <p>Each tier has exactly one vault, permanently, resolvable with a single <code>vaultOfTier(tier)</code> view call.</p>
+      <div class="etable-wrap">
+        <table class="etable">
+          <thead><tr><th>Tier</th><th>Pair</th><th>Fee / tick spacing</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Tier 1</td><td>DMOB / DMOA (demo tokens)</td><td>3000 / 60</td><td>First band open, ticks [-600, 600]</td></tr>
+            <tr><td>Tier 2</td><td>real testnet USDC / DMOA</td><td>500 / 10</td><td>The first vault whose value isn't entirely demo tokens</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <div class="note-label">Pairing assets with different decimals</div>
+        <p>
+          Tier 2 pairs real USDC (6 decimals) against DMOA (18 decimals). A raw Uniswap v3 pool price of
+          1.0 only means equal <em>value</em> when both assets share the same decimals — true for tier
+          1's two 18-decimal demo tokens, not true here. Since a v3 pool's price is fixed forever at
+          <code>initialize()</code>, tier 2's pool is initialized at the decimal-adjusted 1:1 point
+          instead — <code>sqrtPriceX96 = 10^6 · 2^96</code> when USDC lands as token0, or its inverse
+          when it doesn't (token order depends on the two addresses, decided only at deploy time) —
+          derived from each token's own decimals rather than hardcoded either way, and verified
+          afterward by reading the new pool's real <code>slot0()</code> directly rather than assumed.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wp-sec" id="sec-10">
+    <div class="wp-sec-num">10</div>
+    <h2>Deployment and status</h2>
+    <div class="wp-body">
+      <div class="statrow">
+        <div class="stat"><div class="num mono">73/73</div><div class="label">Foundry tests passing</div></div>
+        <div class="stat"><div class="num mono">24/24</div><div class="label">solver tests passing</div></div>
+        <div class="stat"><div class="num mono">10143</div><div class="label">Monad testnet chain id</div></div>
+      </div>
+      <table class="ptable" style="margin-top:26px">
+        <thead><tr><th>Contract</th><th>Address</th></tr></thead>
+        <tbody>
+          <tr><td>Uniswap v3 factory</td><td class="mono"><a href="https://testnet.monadscan.com/address/0x7Dc4f0eC255F10AB04D46E118Aa4cD2bBCE375B9" target="_blank" rel="noopener">0x7Dc4…E375B9</a></td></tr>
+          <tr><td>ParamsRegistry</td><td class="mono"><a href="https://testnet.monadscan.com/address/0x8F2A67eb13b3BE226439e0cc446755AA1664a08b" target="_blank" rel="noopener">0x8F2A…664a08b</a></td></tr>
+          <tr><td>VaultManager</td><td class="mono"><a href="https://testnet.monadscan.com/address/0x28AC946761572E3b4FeA03163Dc894997b9677FE" target="_blank" rel="noopener">0x28AC…9677FE</a></td></tr>
+          <tr><td>VaultFactory</td><td class="mono"><a href="https://testnet.monadscan.com/address/0xA905e132E5A59d60Edb3C2B387173359A5085922" target="_blank" rel="noopener">0xA905…085922</a></td></tr>
+          <tr><td>Tier 1 vault</td><td class="mono"><a href="https://testnet.monadscan.com/address/0xD534BdcC0E5a4E703A43Be055c5EFFD938114528" target="_blank" rel="noopener">0xD534…114528</a></td></tr>
+          <tr><td>Tier 2 vault</td><td class="mono"><a href="https://testnet.monadscan.com/address/0xE7C37B9f89A5638d0d6eBAea6eee782DfAdE7F66" target="_blank" rel="noopener">0xE7C3…DfAdE7F66</a></td></tr>
+          <tr><td>Demo token faucet</td><td class="mono"><a href="https://testnet.monadscan.com/address/0x1127012EA9565880aa49Eab79487E1736E228Fb0" target="_blank" rel="noopener">0x1127…E228Fb0</a></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:22px">
+        See <a href="app.html">the app</a> for live vault state and a deposit flow, or the
+        <a href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">README</a>
+        for the full address set and setup instructions.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Rangekeeper is an adaptive liquidity protocol for Monad, live on testnet. This document is
+      informational and describes the deployed mechanism as of this writing; it is not investment
+      advice and carries no guarantee that any tier's parameters, addresses, or behavior remain
+      unchanged going forward — check the address table above and the live app before relying on
+      anything here. AUSD referenced elsewhere on this site is a separate stablecoin, not affiliated
+      with Aurora.
+    </p>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="app.html">App</a>
+      <a href="status.html">Console</a>
+      <a href="https://github.com/softalpha0/Rangekeeper" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+  });
+</script>
+</body>
+</html>

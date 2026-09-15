@@ -1,0 +1,40 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+optimizer = true
+optimizer_runs = 200
+via_ir = true # VaultManager._recenter's local-variable count hits legacy codegen's stack-too-deep limit
+# No pinned solc_version: our own contracts are ^0.8.26. `vendor/` (the real
+# UniswapV3Factory contract this project deploys itself, since no canonical
+# one exists on Monad testnet) is pinned to exactly 0.7.6 upstream and
+# predates viaIR supporting modifiers — see the `vendor` profile below and
+# vendor/CompileUniswapV3Factory.sol's own comment. `vendor/` is outside
+# src/test/script, so this default profile never touches it.
+
+# Compiles the real UniswapV3Factory in isolation, without via_ir (which it
+# can't use — see above). Both profiles write into the same `out/`, so
+# running `forge build --profile vendor` once before the normal `forge
+# build`/`forge test` gives every artifact both builds need. CI and any
+# fresh clone must run the vendor build first — see README's Setup section.
+[profile.vendor]
+src = "vendor"
+test = "vendor"
+script = "vendor"
+out = "out"
+libs = ["lib"]
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+
+[rpc_endpoints]
+# Corrected 2026-09-07: the old "rpc.testnet.monad.xyz" doesn't resolve at all
+# (confirmed dead from two independent networks, not a local DNS issue) — the
+# real hostname has "testnet-rpc", not "rpc.testnet". Verified against
+# docs.monad.xyz/developer-essentials/testnet directly before changing this.
+monad_testnet = "https://testnet-rpc.monad.xyz"
+monad_mainnet = "https://rpc.monad.xyz"
+
+[etherscan]
+# Monad explorer verification — fill in once an API key is issued.
+monad_testnet = { key = "${MONADSCAN_API_KEY}", url = "https://api.testnet.monadscan.com/api" }
